@@ -1,0 +1,29 @@
+# Binaries
+bin/
+dist/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test
+*.out
+cover.out
+coverage.txt
+otel-tester
+otel-tester-linux
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Logs
+*.log

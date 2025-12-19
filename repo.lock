@@ -1,0 +1,43 @@
+PLANX SDK REPOSITORY LOCK (v4.0)
+
+--------------------------------
+PUBLIC API
+--------------------------------
+Only sdk/ is public.
+
+--------------------------------
+FORBIDDEN
+--------------------------------
+- Exported symbols in internal/
+- Any reference to planx-engine
+- Plugin-specific logic
+
+--------------------------------
+ARCHITECTURAL RULES
+--------------------------------
+- SDK owns runtime semantics
+- Plugins are passive
+- gRPC is an implementation detail
+
+Allowed top-level directories:
+- internal/
+- sdk/
+
+internal/ allowed subdirectories:
+- session/
+- flow/
+- batch/
+- runtime/
+- util/
+
+The following are FORBIDDEN:
+- engine logic
+- plugin business logic
+- example pipelines
+- dynamic behavior outside SDK
+
+--------------------------------
+AI GUARDRAIL
+--------------------------------
+If unsure whether logic belongs to SDK or Plugin:
+IT BELONGS TO SDK.

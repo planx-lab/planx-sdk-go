@@ -1,8 +1,17 @@
-# AI RULES – PLANX SDK (v4)
+# AI RULES — PLANX SDK (v4)
 
-You are working inside Planx SDK.
+## Authority Documents
 
-This SDK owns ALL runtime semantics.
+Before modification:
+1. [planx-architecture.md](../planx-architecture.md)
+2. [planx-ai-guardrails.md](../planx-ai-guardrails.md)
+3. [AI_CONTRACT.md](../AI_CONTRACT.md)
+
+---
+
+## SCOPE
+
+This SDK owns ALL runtime semantics (sessions, gRPC, flow control).
 
 ---
 

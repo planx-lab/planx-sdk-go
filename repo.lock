@@ -1,5 +1,14 @@
 PLANX SDK REPOSITORY LOCK (v4.0)
 
+## Authority
+
+MUST comply with:
+1. [planx-architecture.md](../planx-architecture.md)
+2. [planx-ai-guardrails.md](../planx-ai-guardrails.md)
+3. [AI_CONTRACT.md](../AI_CONTRACT.md)
+
+---
+
 --------------------------------
 PUBLIC API
 --------------------------------

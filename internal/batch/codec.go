@@ -5,6 +5,14 @@ import (
 	"encoding/gob"
 )
 
+func init() {
+	gob.Register(map[string]string{})
+}
+
+type batchWrapper struct {
+	Batch any
+}
+
 type Codec interface {
 	Pack(batch any) (PackedBatch, error)
 	Unpack(p PackedBatch) (any, error)
@@ -18,12 +26,12 @@ func NewCodec() Codec {
 
 func (c *gobCodec) Pack(b any) (PackedBatch, error) {
 	var buf bytes.Buffer
-	err := gob.NewEncoder(&buf).Encode(b)
+	err := gob.NewEncoder(&buf).Encode(batchWrapper{Batch: b})
 	return buf.Bytes(), err
 }
 
 func (c *gobCodec) Unpack(p PackedBatch) (any, error) {
-	var b any
-	err := gob.NewDecoder(bytes.NewReader(p)).Decode(&b)
-	return b, err
+	var w batchWrapper
+	err := gob.NewDecoder(bytes.NewReader(p)).Decode(&w)
+	return w.Batch, err
 }

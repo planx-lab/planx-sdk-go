@@ -9,6 +9,13 @@ func init() {
 	gob.Register(map[string]string{})
 }
 
+// RegisterType registers a custom type with the gob codec so it can be
+// serialized in plugin batch data. Plugins that return custom types from
+// ReadBatch/Process must call this before serving.
+func RegisterType(value any) {
+	gob.Register(value)
+}
+
 type batchWrapper struct {
 	Batch any
 }

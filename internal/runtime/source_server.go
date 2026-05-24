@@ -7,6 +7,8 @@ import (
 	"github.com/planx-lab/planx-sdk-go/internal/batch"
 	"github.com/planx-lab/planx-sdk-go/internal/flow"
 	"github.com/planx-lab/planx-sdk-go/internal/session"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type SourceSPI interface {
@@ -65,13 +67,18 @@ func (s *SourceServer) OpenStream(
 
 	sess, ok := s.sessions.Get(req.SessionId)
 	if !ok {
-		return nil
+		return status.Error(codes.NotFound, "session not found")
 	}
 
 	sess.window.Release(int(req.InitialWindow))
 
 	for {
 		sess.window.Acquire()
+
+		// Check if the stream context has been cancelled (client disconnect).
+		if err := stream.Context().Err(); err != nil {
+			return err
+		}
 
 		b, err := sess.spi.ReadBatch()
 		if err != nil {
@@ -97,9 +104,11 @@ func (s *SourceServer) Ack(
 ) (*pb.AckResponse, error) {
 
 	sess, ok := s.sessions.Get(req.SessionId)
-	if ok {
-		sess.window.Release(int(req.NewWindow))
+	if !ok {
+		return nil, status.Error(codes.NotFound, "session not found")
 	}
+
+	sess.window.Release(int(req.NewWindow))
 
 	return &pb.AckResponse{}, nil
 }
@@ -109,10 +118,9 @@ func (s *SourceServer) CloseSession(
 	req *pb.SessionCloseRequest,
 ) (*pb.Empty, error) {
 
-	sess, ok := s.sessions.Get(req.SessionId)
+	sess, ok := s.sessions.DeleteAndGet(req.SessionId)
 	if ok {
 		_ = sess.spi.Close()
-		s.sessions.Remove(req.SessionId)
 	}
 
 	return &pb.Empty{}, nil

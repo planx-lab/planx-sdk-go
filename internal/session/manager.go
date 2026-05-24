@@ -24,6 +24,18 @@ func (m *Manager[T]) Get(id string) (T, bool) {
 	return v, ok
 }
 
+func (m *Manager[T]) DeleteAndGet(id string) (T, bool) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	v, ok := m.m[id]
+	if !ok {
+		var zero T
+		return zero, false
+	}
+	delete(m.m, id)
+	return v, true
+}
+
 func (m *Manager[T]) Remove(id string) {
 	m.mu.Lock()
 	defer m.mu.Unlock()

@@ -92,10 +92,9 @@ func (s *SinkServer) CloseSession(
 	req *pb.SessionCloseRequest,
 ) (*pb.Empty, error) {
 
-	sess, ok := s.sessions.Get(req.SessionId)
+	sess, ok := s.sessions.DeleteAndGet(req.SessionId)
 	if ok {
 		_ = sess.spi.Close()
-		s.sessions.Remove(req.SessionId)
 	}
 
 	return &pb.Empty{}, nil

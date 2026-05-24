@@ -22,7 +22,10 @@ func ServeGRPC(register func(*grpc.Server)) {
 		panic(err)
 	}
 
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(
+		grpc.ChainUnaryInterceptor(recoveryUnaryInterceptor),
+		grpc.ChainStreamInterceptor(recoveryStreamInterceptor),
+	)
 	register(grpcServer)
 
 	hs := Handshake{

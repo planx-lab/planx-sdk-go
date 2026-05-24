@@ -98,10 +98,9 @@ func (p *ProcessorServer) CloseSession(
 	req *pb.SessionCloseRequest,
 ) (*pb.Empty, error) {
 
-	sess, ok := p.sessions.Get(req.SessionId)
+	sess, ok := p.sessions.DeleteAndGet(req.SessionId)
 	if ok {
 		_ = sess.spi.Close()
-		p.sessions.Remove(req.SessionId)
 	}
 
 	return &pb.Empty{}, nil

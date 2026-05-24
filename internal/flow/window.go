@@ -24,6 +24,9 @@ func (w *Window) Acquire() {
 }
 
 func (w *Window) Release(n int) {
+	if n <= 0 {
+		return
+	}
 	w.mu.Lock()
 	w.value += n
 	w.mu.Unlock()

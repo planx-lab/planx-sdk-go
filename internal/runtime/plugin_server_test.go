@@ -354,39 +354,63 @@ func TestWriteBatch_NonSinkSession_FailedPrecondition(t *testing.T) {
 	assertCode(t, err, codes.FailedPrecondition)
 }
 
-func TestCreateSession_SourceFactoryNil_FailedPrecondition(t *testing.T) {
-	srv, _ := NewPluginServer(newDesc("p"), []ComponentRegistration{{
+func TestNewPluginServer_KindFactoryMismatch_SourceButNoFactory(t *testing.T) {
+	_, err := NewPluginServer(newDesc("p"), []ComponentRegistration{{
 		Descriptor:    &pb.ComponentDescriptor{Id: "src", Kind: pb.ComponentKind_COMPONENT_KIND_SOURCE},
 		SourceFactory: nil,
 	}})
-	_, err := srv.CreateSession(context.Background(), &pb.SessionCreateRequest{ComponentId: "src"})
-	assertCode(t, err, codes.FailedPrecondition)
+	if err == nil {
+		t.Fatal("expected error for SOURCE with no factory")
+	}
 }
 
-func TestCreateSession_ProcessorFactoryNil_FailedPrecondition(t *testing.T) {
-	srv, _ := NewPluginServer(newDesc("p"), []ComponentRegistration{{
-		Descriptor:       &pb.ComponentDescriptor{Id: "proc", Kind: pb.ComponentKind_COMPONENT_KIND_PROCESSOR},
-		ProcessorFactory: nil,
+func TestNewPluginServer_KindFactoryMismatch_WrongFactory(t *testing.T) {
+	_, err := NewPluginServer(newDesc("p"), []ComponentRegistration{{
+		Descriptor:       &pb.ComponentDescriptor{Id: "src", Kind: pb.ComponentKind_COMPONENT_KIND_SOURCE},
+		ProcessorFactory: func() ProcessorSPI { return &mockProcessorSPI{} },
 	}})
-	_, err := srv.CreateSession(context.Background(), &pb.SessionCreateRequest{ComponentId: "proc"})
-	assertCode(t, err, codes.FailedPrecondition)
+	if err == nil {
+		t.Fatal("expected error for SOURCE with wrong (Processor) factory")
+	}
 }
 
-func TestCreateSession_SinkFactoryNil_FailedPrecondition(t *testing.T) {
-	srv, _ := NewPluginServer(newDesc("p"), []ComponentRegistration{{
-		Descriptor:  &pb.ComponentDescriptor{Id: "sink", Kind: pb.ComponentKind_COMPONENT_KIND_SINK},
-		SinkFactory: nil,
-	}})
-	_, err := srv.CreateSession(context.Background(), &pb.SessionCreateRequest{ComponentId: "sink"})
-	assertCode(t, err, codes.FailedPrecondition)
-}
-
-func TestCreateSession_UnsupportedKind_InvalidArgument(t *testing.T) {
-	srv, _ := NewPluginServer(newDesc("p"), []ComponentRegistration{{
+func TestNewPluginServer_UnsupportedKind(t *testing.T) {
+	_, err := NewPluginServer(newDesc("p"), []ComponentRegistration{{
 		Descriptor: &pb.ComponentDescriptor{Id: "bad", Kind: pb.ComponentKind_COMPONENT_KIND_UNSPECIFIED},
 	}})
-	_, err := srv.CreateSession(context.Background(), &pb.SessionCreateRequest{ComponentId: "bad"})
-	assertCode(t, err, codes.InvalidArgument)
+	if err == nil {
+		t.Fatal("expected error for UNSPECIFIED kind")
+	}
+}
+
+func TestNewPluginServer_ProcessorFactory_OK(t *testing.T) {
+	srv, err := NewPluginServer(newDesc("p",
+		&pb.ComponentDescriptor{Id: "proc", Kind: pb.ComponentKind_COMPONENT_KIND_PROCESSOR},
+	), []ComponentRegistration{{
+		Descriptor:       &pb.ComponentDescriptor{Id: "proc", Kind: pb.ComponentKind_COMPONENT_KIND_PROCESSOR},
+		ProcessorFactory: func() ProcessorSPI { return &mockProcessorSPI{} },
+	}})
+	if err != nil {
+		t.Fatalf("NewPluginServer: %v", err)
+	}
+	if srv == nil || len(srv.components) != 1 {
+		t.Fatal("expected 1 registered component")
+	}
+}
+
+func TestNewPluginServer_SinkFactory_OK(t *testing.T) {
+	srv, err := NewPluginServer(newDesc("p",
+		&pb.ComponentDescriptor{Id: "sink", Kind: pb.ComponentKind_COMPONENT_KIND_SINK},
+	), []ComponentRegistration{{
+		Descriptor:  &pb.ComponentDescriptor{Id: "sink", Kind: pb.ComponentKind_COMPONENT_KIND_SINK},
+		SinkFactory: func() SinkSPI { return &mockSinkSPI{} },
+	}})
+	if err != nil {
+		t.Fatalf("NewPluginServer: %v", err)
+	}
+	if srv == nil || len(srv.components) != 1 {
+		t.Fatal("expected 1 registered component")
+	}
 }
 
 func TestAck_NonSourceSession_NoOp(t *testing.T) {

@@ -13,6 +13,18 @@ func (s *stubSource) Init(_ context.Context, _ []byte) error { return s.initErr 
 func (s *stubSource) ReadBatch() (Batch, error)              { return nil, nil }
 func (s *stubSource) Close() error                           { return nil }
 
+type stubProcessor struct{}
+
+func (p *stubProcessor) Init(_ context.Context, _ []byte) error { return nil }
+func (p *stubProcessor) Process(_ Batch) (Batch, error)         { return nil, nil }
+func (p *stubProcessor) Close() error                           { return nil }
+
+type stubSink struct{}
+
+func (s *stubSink) Init(_ context.Context, _ []byte) error { return nil }
+func (s *stubSink) WriteBatch(_ Batch) error                    { return nil }
+func (s *stubSink) Close() error                           { return nil }
+
 func TestBuildRegistration_DescriptorAndComponents(t *testing.T) {
 	p := Plugin{
 		ID:          "hello",
@@ -50,6 +62,69 @@ func TestBuildRegistration_DescriptorAndComponents(t *testing.T) {
 	}
 	if desc.GetComponents()[0].GetKind() != pb.ComponentKind_COMPONENT_KIND_SOURCE {
 		t.Fatalf("kind: %v", desc.GetComponents()[0].GetKind())
+	}
+}
+
+func TestBuildRegistration_MultiComponent_AllWired(t *testing.T) {
+	validate := func(_ context.Context, _ []byte) (bool, string) { return true, "" }
+	p := Plugin{
+		ID:      "multi",
+		Version: "0.1.0",
+		Components: []ComponentSpec{
+			{
+				ID:          "src",
+				Kind:        KindSource,
+				DisplayName: "My Source",
+				Source:      func() SourceSPI { return &stubSource{} },
+				Validate:    validate,
+			},
+			{
+				ID:          "proc",
+				Kind:        KindProcessor,
+				DisplayName: "My Processor",
+				Processor:   func() ProcessorSPI { return &stubProcessor{} },
+			},
+			{
+				ID:          "snk",
+				Kind:        KindSink,
+				DisplayName: "My Sink",
+				Sink:        func() SinkSPI { return &stubSink{} },
+			},
+		},
+	}
+
+	desc, comps := buildRegistration(p)
+	if len(comps) != 3 {
+		t.Fatalf("expected 3 comp regs, got %d", len(comps))
+	}
+	// Source
+	if comps[0].SourceFactory == nil || comps[0].ProcessorFactory != nil || comps[0].SinkFactory != nil {
+		t.Fatal("source: expected only SourceFactory wired")
+	}
+	if comps[0].Validate == nil {
+		t.Fatal("source: expected Validate hook")
+	}
+	// Processor
+	if comps[1].ProcessorFactory == nil || comps[1].SourceFactory != nil || comps[1].SinkFactory != nil {
+		t.Fatal("processor: expected only ProcessorFactory wired")
+	}
+	// Sink
+	if comps[2].SinkFactory == nil || comps[2].SourceFactory != nil || comps[2].ProcessorFactory != nil {
+		t.Fatal("sink: expected only SinkFactory wired")
+	}
+	// Descriptor
+	descComps := desc.GetComponents()
+	if len(descComps) != 3 {
+		t.Fatalf("expected 3 descriptor components, got %d", len(descComps))
+	}
+	if descComps[0].GetKind() != pb.ComponentKind_COMPONENT_KIND_SOURCE {
+		t.Fatalf("desc[0] kind: %v", descComps[0].GetKind())
+	}
+	if descComps[1].GetKind() != pb.ComponentKind_COMPONENT_KIND_PROCESSOR {
+		t.Fatalf("desc[1] kind: %v", descComps[1].GetKind())
+	}
+	if descComps[2].GetKind() != pb.ComponentKind_COMPONENT_KIND_SINK {
+		t.Fatalf("desc[2] kind: %v", descComps[2].GetKind())
 	}
 }
 

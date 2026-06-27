@@ -61,6 +61,31 @@ func NewPluginServer(desc *pb.PluginDescriptor, comps []ComponentRegistration) (
 		if _, dup := m[id]; dup {
 			return nil, fmt.Errorf("duplicate component id %q", id)
 		}
+		switch kind := c.Descriptor.GetKind(); kind {
+		case pb.ComponentKind_COMPONENT_KIND_SOURCE:
+			if c.SourceFactory == nil {
+				return nil, fmt.Errorf("component %q (SOURCE): required factory missing", id)
+			}
+			if c.ProcessorFactory != nil || c.SinkFactory != nil {
+				return nil, fmt.Errorf("component %q (SOURCE): wrong factory set", id)
+			}
+		case pb.ComponentKind_COMPONENT_KIND_PROCESSOR:
+			if c.ProcessorFactory == nil {
+				return nil, fmt.Errorf("component %q (PROCESSOR): required factory missing", id)
+			}
+			if c.SourceFactory != nil || c.SinkFactory != nil {
+				return nil, fmt.Errorf("component %q (PROCESSOR): wrong factory set", id)
+			}
+		case pb.ComponentKind_COMPONENT_KIND_SINK:
+			if c.SinkFactory == nil {
+				return nil, fmt.Errorf("component %q (SINK): required factory missing", id)
+			}
+			if c.SourceFactory != nil || c.ProcessorFactory != nil {
+				return nil, fmt.Errorf("component %q (SINK): wrong factory set", id)
+			}
+		default:
+			return nil, fmt.Errorf("component %q: unsupported kind %v", id, kind)
+		}
 		m[id] = c
 	}
 	return &PluginServer{

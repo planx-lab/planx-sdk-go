@@ -3,10 +3,12 @@ package runtime
 import (
 	"context"
 	"errors"
+	"io"
 	"testing"
 
 	pb "github.com/planx-lab/planx-proto/gen/go/planx/plugin/v4"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 )
 
 func newDesc(id string, comps ...*pb.ComponentDescriptor) *pb.PluginDescriptor {
@@ -200,5 +202,80 @@ func TestValidateConfig_WithHook(t *testing.T) {
 	}
 	if res.GetMessage() != "cannot reach upstream" {
 		t.Fatalf("expected hook message, got %q", res.GetMessage())
+	}
+}
+
+// mockSourceStream implements grpc.ServerStreamingServer[*pb.Batch] for tests.
+type mockSourceStream struct {
+	ctx     context.Context
+	sent    []*pb.Batch
+	sendErr error
+}
+
+func (m *mockSourceStream) SetHeader(metadata.MD) error  { return nil }
+func (m *mockSourceStream) SendHeader(metadata.MD) error { return nil }
+func (m *mockSourceStream) SetTrailer(metadata.MD)       {}
+func (m *mockSourceStream) Context() context.Context     { return m.ctx }
+func (m *mockSourceStream) SendMsg(any) error            { return nil }
+func (m *mockSourceStream) RecvMsg(any) error            { return nil }
+func (m *mockSourceStream) Send(b *pb.Batch) error {
+	if m.sendErr != nil {
+		return m.sendErr
+	}
+	m.sent = append(m.sent, b)
+	return nil
+}
+
+func TestOpenStream_SourceEOF_ClosesCleanly(t *testing.T) {
+	src := &mockSourceSPI{batchErr: io.EOF}
+	srv := buildTestServer(t, src, &mockProcessorSPI{}, &mockSinkSPI{})
+	resp, _ := srv.CreateSession(context.Background(), &pb.SessionCreateRequest{ComponentId: "src"})
+
+	err := srv.OpenStream(&pb.StreamOpenRequest{SessionId: resp.GetSessionId(), InitialWindow: 10},
+		&mockSourceStream{ctx: context.Background()})
+	if err != nil {
+		t.Fatalf("OpenStream on io.EOF: want nil (clean close), got %v", err)
+	}
+}
+
+func TestOpenStream_RealError_Propagates(t *testing.T) {
+	wantErr := errors.New("source boom")
+	src := &mockSourceSPI{batchErr: wantErr}
+	srv := buildTestServer(t, src, &mockProcessorSPI{}, &mockSinkSPI{})
+	resp, _ := srv.CreateSession(context.Background(), &pb.SessionCreateRequest{ComponentId: "src"})
+
+	err := srv.OpenStream(&pb.StreamOpenRequest{SessionId: resp.GetSessionId(), InitialWindow: 10},
+		&mockSourceStream{ctx: context.Background()})
+	if !errors.Is(err, wantErr) {
+		t.Fatalf("OpenStream: want %v, got %v", wantErr, err)
+	}
+}
+
+func TestOpenStream_UnknownSession_NotFound(t *testing.T) {
+	srv := buildTestServer(t, &mockSourceSPI{}, &mockProcessorSPI{}, &mockSinkSPI{})
+	err := srv.OpenStream(&pb.StreamOpenRequest{SessionId: "ghost"},
+		&mockSourceStream{ctx: context.Background()})
+	assertCode(t, err, codes.NotFound)
+}
+
+func TestOpenStream_NonSourceSession_FailedPrecondition(t *testing.T) {
+	srv := buildTestServer(t, &mockSourceSPI{}, &mockProcessorSPI{}, &mockSinkSPI{})
+	// Create a PROCESSOR session, then try to OpenStream on it.
+	resp, _ := srv.CreateSession(context.Background(), &pb.SessionCreateRequest{ComponentId: "proc"})
+	err := srv.OpenStream(&pb.StreamOpenRequest{SessionId: resp.GetSessionId()},
+		&mockSourceStream{ctx: context.Background()})
+	assertCode(t, err, codes.FailedPrecondition)
+}
+
+func TestOpenStream_SendsBatches(t *testing.T) {
+	src := &mockSourceSPI{batch: map[string]string{"x": "1"}, batchErr: io.EOF}
+	srv := buildTestServer(t, src, &mockProcessorSPI{}, &mockSinkSPI{})
+	resp, _ := srv.CreateSession(context.Background(), &pb.SessionCreateRequest{ComponentId: "src"})
+	st := &mockSourceStream{ctx: context.Background()}
+	if err := srv.OpenStream(&pb.StreamOpenRequest{SessionId: resp.GetSessionId(), InitialWindow: 4}, st); err != nil {
+		t.Fatalf("OpenStream: %v", err)
+	}
+	if len(st.sent) != 1 {
+		t.Fatalf("expected 1 sent batch, got %d", len(st.sent))
 	}
 }

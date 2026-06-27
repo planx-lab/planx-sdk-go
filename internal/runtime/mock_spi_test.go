@@ -16,13 +16,30 @@ type mockSourceSPI struct {
 	initErr     error
 	batch       any
 	batchErr    error
+	batches     []any   // queued batches (pop one per ReadBatch)
+	errs        []error // queued errors (pop one per ReadBatch)
 	closeErr    error
 	closeCalled bool
 }
 
 func (m *mockSourceSPI) Init(_ context.Context, _ []byte) error { return m.initErr }
-func (m *mockSourceSPI) ReadBatch() (any, error)                { return m.batch, m.batchErr }
-func (m *mockSourceSPI) Close() error                           { m.closeCalled = true; return m.closeErr }
+func (m *mockSourceSPI) ReadBatch() (any, error) {
+	if len(m.batches) > 0 || len(m.errs) > 0 {
+		var b any
+		if len(m.batches) > 0 {
+			b = m.batches[0]
+			m.batches = m.batches[1:]
+		}
+		var e error
+		if len(m.errs) > 0 {
+			e = m.errs[0]
+			m.errs = m.errs[1:]
+		}
+		return b, e
+	}
+	return m.batch, m.batchErr
+}
+func (m *mockSourceSPI) Close() error { m.closeCalled = true; return m.closeErr }
 
 type mockProcessorSPI struct {
 	initErr  error

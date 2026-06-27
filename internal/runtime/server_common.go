@@ -11,11 +11,15 @@ import (
 	"google.golang.org/grpc"
 )
 
+// Handshake is the JSON the plugin prints to STDOUT (and writes to
+// planx.handshake) so the Engine can discover the listening address.
 type Handshake struct {
 	Protocol string `json:"protocol"`
 	Address  string `json:"address"`
 }
 
+// ServeGRPC listens on an ephemeral loopback port, hands the *grpc.Server to
+// register, emits the handshake, then blocks serving.
 func ServeGRPC(register func(*grpc.Server)) {
 	lis, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
@@ -43,7 +47,7 @@ func ServeGRPC(register func(*grpc.Server)) {
 	}
 
 	// NOTE: The first line written to STDOUT is reserved
-	// exclusively for Planx handshake JSON.
+	// exclusively for the Planx handshake JSON.
 	fmt.Printf("%s\n", data)
 
 	if err := grpcServer.Serve(lis); err != nil {
@@ -51,16 +55,13 @@ func ServeGRPC(register func(*grpc.Server)) {
 	}
 }
 
-func RegisterSourceServer(s *grpc.Server, srv pb.SourcePluginServer) {
-	pb.RegisterSourcePluginServer(s, srv)
-}
-
-func RegisterSinkServer(s *grpc.Server, srv pb.SinkPluginServer) {
-	pb.RegisterSinkPluginServer(s, srv)
-}
-
-func RegisterProcessorServer(s *grpc.Server, srv pb.ProcessorPluginServer) {
-	pb.RegisterProcessorPluginServer(s, srv)
+// RegisterAll registers all five protocol services for one PluginServer.
+func RegisterAll(s *grpc.Server, srv *PluginServer) {
+	pb.RegisterPluginServiceServer(s, srv)
+	pb.RegisterSessionServiceServer(s, srv)
+	pb.RegisterSourceServiceServer(s, srv)
+	pb.RegisterProcessorServiceServer(s, srv)
+	pb.RegisterSinkServiceServer(s, srv)
 }
 
 func generateSessionID() string {

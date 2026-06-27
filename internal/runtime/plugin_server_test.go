@@ -268,7 +268,7 @@ func TestOpenStream_NonSourceSession_FailedPrecondition(t *testing.T) {
 }
 
 func TestOpenStream_SendsBatches(t *testing.T) {
-	src := &mockSourceSPI{batch: map[string]string{"x": "1"}, batchErr: io.EOF}
+	src := &mockSourceSPI{batches: []any{map[string]string{"x": "1"}}, errs: []error{nil, io.EOF}}
 	srv := buildTestServer(t, src, &mockProcessorSPI{}, &mockSinkSPI{})
 	resp, _ := srv.CreateSession(context.Background(), &pb.SessionCreateRequest{ComponentId: "src"})
 	st := &mockSourceStream{ctx: context.Background()}

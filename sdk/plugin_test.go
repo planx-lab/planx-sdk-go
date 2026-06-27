@@ -52,3 +52,34 @@ func TestBuildRegistration_DescriptorAndComponents(t *testing.T) {
 		t.Fatalf("kind: %v", desc.GetComponents()[0].GetKind())
 	}
 }
+
+func TestSchema_BuilderAssemblesFields(t *testing.T) {
+	s := Schema(
+		StringField("host", Required(), WithDescription("upstream host"), WithDefault(StringValue("localhost"))),
+		IntegerField("port", WithDefault(IntValue(5432))),
+		SecretField("api_key", Required()),
+		EnumField("mode", []string{"fast", "safe"}, WithDefault(StringValue("safe"))),
+		BooleanField("tls", WithDefault(BoolValue(false))),
+	)
+	if len(s.GetFields()) != 5 {
+		t.Fatalf("expected 5 fields, got %d", len(s.GetFields()))
+	}
+	host := s.GetFields()[0]
+	if host.GetName() != "host" || host.GetType() != pb.FieldType_FIELD_TYPE_STRING {
+		t.Fatalf("host field: %+v", host)
+	}
+	if !host.GetRequired() {
+		t.Fatal("host should be required")
+	}
+	if host.GetDefault().GetStringValue() != "localhost" {
+		t.Fatalf("host default: %v", host.GetDefault())
+	}
+	key := s.GetFields()[2]
+	if key.GetType() != pb.FieldType_FIELD_TYPE_SECRET {
+		t.Fatalf("api_key type: %v", key.GetType())
+	}
+	mode := s.GetFields()[3]
+	if mode.GetType() != pb.FieldType_FIELD_TYPE_ENUM || len(mode.GetEnumValues()) != 2 {
+		t.Fatalf("mode field: %+v", mode)
+	}
+}

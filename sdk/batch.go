@@ -6,7 +6,7 @@ type Batch = any
 
 // RegisterType registers a custom batch data type for gob serialization.
 // Plugins that return custom types from ReadBatch/Process must call this
-// before ServeSource/ServeProcessor/ServeSink.
+// before Serve.
 func RegisterType(value any) {
 	batch.RegisterType(value)
 }

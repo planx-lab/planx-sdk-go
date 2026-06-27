@@ -2,6 +2,9 @@ package runtime
 
 import (
 	"context"
+	"fmt"
+	"io"
+	"os"
 
 	pb "github.com/planx-lab/planx-proto/gen/go/planx/plugin/v4"
 	"github.com/planx-lab/planx-sdk-go/internal/batch"
@@ -73,15 +76,20 @@ func (s *SourceServer) OpenStream(
 	sess.window.Release(int(req.InitialWindow))
 
 	for {
-		sess.window.Acquire()
-
-		// Check if the stream context has been cancelled (client disconnect).
-		if err := stream.Context().Err(); err != nil {
+		if err := sess.window.AcquireContext(stream.Context()); err != nil {
 			return err
 		}
 
 		b, err := sess.spi.ReadBatch()
 		if err != nil {
+			// io.EOF means the source is exhausted — close the stream cleanly so
+			// the engine's stream.Recv() gets a real io.EOF (classified as
+			// CodeEOF -> pipeline SUCCEEDED). Returning io.EOF directly makes
+			// gRPC wrap it as code=Unknown, which the engine misreads as a
+			// plugin failure.
+			if err == io.EOF {
+				return nil
+			}
 			return err
 		}
 
@@ -120,7 +128,9 @@ func (s *SourceServer) CloseSession(
 
 	sess, ok := s.sessions.DeleteAndGet(req.SessionId)
 	if ok {
-		_ = sess.spi.Close()
+		if err := sess.spi.Close(); err != nil {
+			fmt.Fprintf(os.Stderr, "[planx-sdk] source spi.Close error: %v\n", err)
+		}
 	}
 
 	return &pb.Empty{}, nil

@@ -2,6 +2,8 @@ package runtime
 
 import (
 	"context"
+	"fmt"
+	"os"
 
 	pb "github.com/planx-lab/planx-proto/gen/go/planx/plugin/v4"
 	"github.com/planx-lab/planx-sdk-go/internal/batch"
@@ -100,7 +102,9 @@ func (p *ProcessorServer) CloseSession(
 
 	sess, ok := p.sessions.DeleteAndGet(req.SessionId)
 	if ok {
-		_ = sess.spi.Close()
+		if err := sess.spi.Close(); err != nil {
+			fmt.Fprintf(os.Stderr, "[planx-sdk] processor spi.Close error: %v\n", err)
+		}
 	}
 
 	return &pb.Empty{}, nil

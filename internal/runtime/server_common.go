@@ -38,7 +38,7 @@ func ServeGRPC(register func(*grpc.Server)) {
 		panic(err)
 	}
 
-	if err := os.WriteFile("planx.handshake", data, 0644); err != nil {
+	if err := os.WriteFile("planx.handshake", data, 0600); err != nil {
 		panic(err)
 	}
 

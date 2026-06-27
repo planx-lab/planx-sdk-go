@@ -2,6 +2,8 @@ package runtime
 
 import (
 	"context"
+	"fmt"
+	"os"
 
 	pb "github.com/planx-lab/planx-proto/gen/go/planx/plugin/v4"
 	"github.com/planx-lab/planx-sdk-go/internal/batch"
@@ -94,7 +96,9 @@ func (s *SinkServer) CloseSession(
 
 	sess, ok := s.sessions.DeleteAndGet(req.SessionId)
 	if ok {
-		_ = sess.spi.Close()
+		if err := sess.spi.Close(); err != nil {
+			fmt.Fprintf(os.Stderr, "[planx-sdk] sink spi.Close error: %v\n", err)
+		}
 	}
 
 	return &pb.Empty{}, nil

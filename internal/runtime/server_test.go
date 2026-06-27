@@ -3,6 +3,7 @@ package runtime
 import (
 	"context"
 	"errors"
+	"io"
 	"testing"
 
 	pb "github.com/planx-lab/planx-proto/gen/go/planx/plugin/v4"
@@ -390,4 +391,71 @@ func TestSinkServer_CloseSession(t *testing.T) {
 	ctx := ctxWithSessionID(sid)
 	_, err = srv.WriteBatch(ctx, &pb.Batch{Payload: []byte("x")})
 	assertCode(t, err, codes.NotFound)
+}
+
+// ===========================================================================
+// SourceServer.OpenStream tests
+// ===========================================================================
+
+// mockSourceStream implements grpc.ServerStream plus the generated Send(*pb.Batch),
+// so OpenStream can be driven without a real gRPC connection.
+type mockSourceStream struct {
+	ctx     context.Context
+	sent    []*pb.Batch
+	sendErr error
+}
+
+func (m *mockSourceStream) SetHeader(metadata.MD) error  { return nil }
+func (m *mockSourceStream) SendHeader(metadata.MD) error { return nil }
+func (m *mockSourceStream) SetTrailer(metadata.MD)       {}
+func (m *mockSourceStream) Context() context.Context     { return m.ctx }
+func (m *mockSourceStream) SendMsg(any) error            { return nil }
+func (m *mockSourceStream) RecvMsg(any) error            { return nil }
+func (m *mockSourceStream) Send(b *pb.Batch) error {
+	if m.sendErr != nil {
+		return m.sendErr
+	}
+	m.sent = append(m.sent, b)
+	return nil
+}
+
+// When a source signals exhaustion via io.EOF, OpenStream must close the gRPC
+// stream cleanly (return nil). gRPC then surfaces io.EOF to the engine's Recv(),
+// which classifies it as CodeEOF -> pipeline SUCCEEDED. Returning io.EOF would
+// be wrapped by gRPC as code=Unknown and misread as a plugin failure.
+func TestSourceServer_OpenStream_SourceEOF_ClosesCleanly(t *testing.T) {
+	srv := NewSourceServer(func() SourceSPI {
+		return &mockSourceSPI{batchErr: io.EOF}
+	})
+	resp, err := srv.CreateSession(context.Background(), &pb.SessionCreateRequest{Config: []byte("{}")})
+	if err != nil {
+		t.Fatalf("CreateSession: %v", err)
+	}
+
+	stream := &mockSourceStream{ctx: context.Background()}
+	err = srv.OpenStream(&pb.StreamOpenRequest{
+		SessionId:     resp.SessionId,
+		InitialWindow: 10,
+	}, stream)
+	if err != nil {
+		t.Fatalf("OpenStream on source io.EOF: want nil (clean close -> engine CodeEOF), got %v", err)
+	}
+}
+
+// A real (non-EOF) source error must still propagate, not be swallowed.
+func TestSourceServer_OpenStream_RealError_Propagates(t *testing.T) {
+	wantErr := errors.New("source boom")
+	srv := NewSourceServer(func() SourceSPI {
+		return &mockSourceSPI{batchErr: wantErr}
+	})
+	resp, _ := srv.CreateSession(context.Background(), &pb.SessionCreateRequest{Config: []byte("{}")})
+
+	stream := &mockSourceStream{ctx: context.Background()}
+	err := srv.OpenStream(&pb.StreamOpenRequest{
+		SessionId:     resp.SessionId,
+		InitialWindow: 10,
+	}, stream)
+	if !errors.Is(err, wantErr) {
+		t.Fatalf("OpenStream on real error: want %v, got %v", wantErr, err)
+	}
 }

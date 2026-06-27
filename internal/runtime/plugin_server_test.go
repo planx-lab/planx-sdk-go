@@ -140,3 +140,65 @@ func TestAck_UnknownSession_NotFound(t *testing.T) {
 	_, err := srv.Ack(context.Background(), &pb.AckRequest{SessionId: "ghost"})
 	assertCode(t, err, codes.NotFound)
 }
+
+func TestDiscover_ReturnsDescriptor(t *testing.T) {
+	srv := buildTestServer(t, &mockSourceSPI{}, &mockProcessorSPI{}, &mockSinkSPI{})
+	desc, err := srv.Discover(context.Background(), &pb.Empty{})
+	if err != nil {
+		t.Fatalf("Discover: %v", err)
+	}
+	if desc.GetId() != "p" {
+		t.Fatalf("expected descriptor id 'p', got %q", desc.GetId())
+	}
+	if len(desc.GetComponents()) != 3 {
+		t.Fatalf("expected 3 components, got %d", len(desc.GetComponents()))
+	}
+}
+
+func TestHealth_DefaultReady(t *testing.T) {
+	srv := buildTestServer(t, &mockSourceSPI{}, &mockProcessorSPI{}, &mockSinkSPI{})
+	h, err := srv.Health(context.Background(), &pb.Empty{})
+	if err != nil {
+		t.Fatalf("Health: %v", err)
+	}
+	if h.GetState() != pb.HealthStatus_STATE_READY {
+		t.Fatalf("expected READY, got %v", h.GetState())
+	}
+}
+
+func TestValidateConfig_UnknownComponent(t *testing.T) {
+	srv := buildTestServer(t, &mockSourceSPI{}, &mockProcessorSPI{}, &mockSinkSPI{})
+	_, err := srv.ValidateConfig(context.Background(), &pb.ConfigValidationRequest{ComponentId: "nope"})
+	assertCode(t, err, codes.NotFound)
+}
+
+func TestValidateConfig_NoHook_DefaultsOk(t *testing.T) {
+	srv := buildTestServer(t, &mockSourceSPI{}, &mockProcessorSPI{}, &mockSinkSPI{})
+	res, err := srv.ValidateConfig(context.Background(), &pb.ConfigValidationRequest{ComponentId: "src"})
+	if err != nil {
+		t.Fatalf("ValidateConfig: %v", err)
+	}
+	if !res.GetOk() {
+		t.Fatal("expected ok=true when no hook registered")
+	}
+}
+
+func TestValidateConfig_WithHook(t *testing.T) {
+	srv, _ := NewPluginServer(newDesc("p"), []ComponentRegistration{{
+		Descriptor:    &pb.ComponentDescriptor{Id: "src", Kind: pb.ComponentKind_COMPONENT_KIND_SOURCE},
+		SourceFactory: func() SourceSPI { return &mockSourceSPI{} },
+		Validate: func(_ context.Context, _ []byte) (bool, string) {
+			return false, "cannot reach upstream"
+		},
+	}})
+	res, err := srv.ValidateConfig(context.Background(), &pb.ConfigValidationRequest{ComponentId: "src"})
+	if err != nil {
+		t.Fatalf("ValidateConfig: %v", err)
+	}
+	if res.GetOk() {
+		t.Fatal("expected ok=false from hook")
+	}
+	if res.GetMessage() != "cannot reach upstream" {
+		t.Fatalf("expected hook message, got %q", res.GetMessage())
+	}
+}

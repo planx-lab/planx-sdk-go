@@ -279,3 +279,44 @@ func TestOpenStream_SendsBatches(t *testing.T) {
 		t.Fatalf("expected 1 sent batch, got %d", len(st.sent))
 	}
 }
+
+func TestProcess_MissingMetadata(t *testing.T) {
+	srv := buildTestServer(t, &mockSourceSPI{}, &mockProcessorSPI{}, &mockSinkSPI{})
+	_, err := srv.Process(ctxNoMetadata(), &pb.Batch{Payload: []byte("x")})
+	assertCode(t, err, codes.InvalidArgument)
+}
+
+func TestProcess_MissingSessionID(t *testing.T) {
+	srv := buildTestServer(t, &mockSourceSPI{}, &mockProcessorSPI{}, &mockSinkSPI{})
+	ctx := metadata.NewIncomingContext(context.Background(), metadata.MD{})
+	_, err := srv.Process(ctx, &pb.Batch{Payload: []byte("x")})
+	assertCode(t, err, codes.InvalidArgument)
+}
+
+func TestProcess_UnknownSession(t *testing.T) {
+	srv := buildTestServer(t, &mockSourceSPI{}, &mockProcessorSPI{}, &mockSinkSPI{})
+	_, err := srv.Process(ctxWithSessionID("ghost"), &pb.Batch{Payload: []byte("x")})
+	assertCode(t, err, codes.NotFound)
+}
+
+func TestProcess_ValidSession(t *testing.T) {
+	proc := &mockProcessorSPI{out: map[string]string{"r": "ok"}}
+	srv := buildTestServer(t, &mockSourceSPI{}, proc, &mockSinkSPI{})
+	resp, _ := srv.CreateSession(context.Background(), &pb.SessionCreateRequest{ComponentId: "proc"})
+
+	payload := packMap(t, map[string]string{"input": "data"})
+	out, err := srv.Process(ctxWithSessionID(resp.GetSessionId()), &pb.Batch{Payload: payload})
+	if err != nil {
+		t.Fatalf("Process: %v", err)
+	}
+	if len(out.GetPayload()) == 0 {
+		t.Fatal("expected non-empty payload")
+	}
+}
+
+func TestProcess_NonProcessorSession_FailedPrecondition(t *testing.T) {
+	srv := buildTestServer(t, &mockSourceSPI{}, &mockProcessorSPI{}, &mockSinkSPI{})
+	resp, _ := srv.CreateSession(context.Background(), &pb.SessionCreateRequest{ComponentId: "src"})
+	_, err := srv.Process(ctxWithSessionID(resp.GetSessionId()), &pb.Batch{Payload: []byte("x")})
+	assertCode(t, err, codes.FailedPrecondition)
+}

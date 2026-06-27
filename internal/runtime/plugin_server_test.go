@@ -353,3 +353,83 @@ func TestWriteBatch_NonSinkSession_FailedPrecondition(t *testing.T) {
 	_, err := srv.WriteBatch(ctxWithSessionID(resp.GetSessionId()), &pb.Batch{Payload: []byte("x")})
 	assertCode(t, err, codes.FailedPrecondition)
 }
+
+func TestCreateSession_SourceFactoryNil_FailedPrecondition(t *testing.T) {
+	srv, _ := NewPluginServer(newDesc("p"), []ComponentRegistration{{
+		Descriptor:    &pb.ComponentDescriptor{Id: "src", Kind: pb.ComponentKind_COMPONENT_KIND_SOURCE},
+		SourceFactory: nil,
+	}})
+	_, err := srv.CreateSession(context.Background(), &pb.SessionCreateRequest{ComponentId: "src"})
+	assertCode(t, err, codes.FailedPrecondition)
+}
+
+func TestCreateSession_ProcessorFactoryNil_FailedPrecondition(t *testing.T) {
+	srv, _ := NewPluginServer(newDesc("p"), []ComponentRegistration{{
+		Descriptor:       &pb.ComponentDescriptor{Id: "proc", Kind: pb.ComponentKind_COMPONENT_KIND_PROCESSOR},
+		ProcessorFactory: nil,
+	}})
+	_, err := srv.CreateSession(context.Background(), &pb.SessionCreateRequest{ComponentId: "proc"})
+	assertCode(t, err, codes.FailedPrecondition)
+}
+
+func TestCreateSession_SinkFactoryNil_FailedPrecondition(t *testing.T) {
+	srv, _ := NewPluginServer(newDesc("p"), []ComponentRegistration{{
+		Descriptor:  &pb.ComponentDescriptor{Id: "sink", Kind: pb.ComponentKind_COMPONENT_KIND_SINK},
+		SinkFactory: nil,
+	}})
+	_, err := srv.CreateSession(context.Background(), &pb.SessionCreateRequest{ComponentId: "sink"})
+	assertCode(t, err, codes.FailedPrecondition)
+}
+
+func TestCreateSession_UnsupportedKind_InvalidArgument(t *testing.T) {
+	srv, _ := NewPluginServer(newDesc("p"), []ComponentRegistration{{
+		Descriptor: &pb.ComponentDescriptor{Id: "bad", Kind: pb.ComponentKind_COMPONENT_KIND_UNSPECIFIED},
+	}})
+	_, err := srv.CreateSession(context.Background(), &pb.SessionCreateRequest{ComponentId: "bad"})
+	assertCode(t, err, codes.InvalidArgument)
+}
+
+func TestAck_NonSourceSession_NoOp(t *testing.T) {
+	srv := buildTestServer(t, &mockSourceSPI{}, &mockProcessorSPI{}, &mockSinkSPI{})
+	resp, _ := srv.CreateSession(context.Background(), &pb.SessionCreateRequest{ComponentId: "proc"})
+	_, err := srv.Ack(context.Background(), &pb.AckRequest{SessionId: resp.GetSessionId(), NewWindow: 5})
+	if err != nil {
+		t.Fatalf("Ack on non-source session: expected nil (no-op), got: %v", err)
+	}
+}
+
+func TestProcess_SPIError_Propagates(t *testing.T) {
+	wantErr := errors.New("proc boom")
+	proc := &mockProcessorSPI{procErr: wantErr}
+	srv, _ := NewPluginServer(newDesc("p",
+		&pb.ComponentDescriptor{Id: "proc", Kind: pb.ComponentKind_COMPONENT_KIND_PROCESSOR},
+	), []ComponentRegistration{{
+		Descriptor:       &pb.ComponentDescriptor{Id: "proc", Kind: pb.ComponentKind_COMPONENT_KIND_PROCESSOR},
+		ProcessorFactory: func() ProcessorSPI { return proc },
+	}})
+	resp, _ := srv.CreateSession(context.Background(), &pb.SessionCreateRequest{ComponentId: "proc"})
+
+	payload := packMap(t, map[string]string{"input": "data"})
+	_, err := srv.Process(ctxWithSessionID(resp.GetSessionId()), &pb.Batch{Payload: payload})
+	if !errors.Is(err, wantErr) {
+		t.Fatalf("expected SPI error to propagate, got: %v", err)
+	}
+}
+
+func TestWriteBatch_SPIError_Propagates(t *testing.T) {
+	wantErr := errors.New("write boom")
+	sink := &mockSinkSPI{writeErr: wantErr}
+	srv, _ := NewPluginServer(newDesc("p",
+		&pb.ComponentDescriptor{Id: "sink", Kind: pb.ComponentKind_COMPONENT_KIND_SINK},
+	), []ComponentRegistration{{
+		Descriptor:  &pb.ComponentDescriptor{Id: "sink", Kind: pb.ComponentKind_COMPONENT_KIND_SINK},
+		SinkFactory: func() SinkSPI { return sink },
+	}})
+	resp, _ := srv.CreateSession(context.Background(), &pb.SessionCreateRequest{ComponentId: "sink"})
+
+	payload := packMap(t, map[string]string{"row": "1"})
+	_, err := srv.WriteBatch(ctxWithSessionID(resp.GetSessionId()), &pb.Batch{Payload: payload})
+	if !errors.Is(err, wantErr) {
+		t.Fatalf("expected SPI error to propagate, got: %v", err)
+	}
+}

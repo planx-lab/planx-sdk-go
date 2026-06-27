@@ -320,3 +320,36 @@ func TestProcess_NonProcessorSession_FailedPrecondition(t *testing.T) {
 	_, err := srv.Process(ctxWithSessionID(resp.GetSessionId()), &pb.Batch{Payload: []byte("x")})
 	assertCode(t, err, codes.FailedPrecondition)
 }
+
+func TestWriteBatch_MissingMetadata(t *testing.T) {
+	srv := buildTestServer(t, &mockSourceSPI{}, &mockProcessorSPI{}, &mockSinkSPI{})
+	_, err := srv.WriteBatch(ctxNoMetadata(), &pb.Batch{Payload: []byte("x")})
+	assertCode(t, err, codes.InvalidArgument)
+}
+
+func TestWriteBatch_UnknownSession(t *testing.T) {
+	srv := buildTestServer(t, &mockSourceSPI{}, &mockProcessorSPI{}, &mockSinkSPI{})
+	_, err := srv.WriteBatch(ctxWithSessionID("ghost"), &pb.Batch{Payload: []byte("x")})
+	assertCode(t, err, codes.NotFound)
+}
+
+func TestWriteBatch_ValidSession(t *testing.T) {
+	sink := &mockSinkSPI{}
+	srv := buildTestServer(t, &mockSourceSPI{}, &mockProcessorSPI{}, sink)
+	resp, _ := srv.CreateSession(context.Background(), &pb.SessionCreateRequest{ComponentId: "sink"})
+
+	payload := packMap(t, map[string]string{"row": "1"})
+	if _, err := srv.WriteBatch(ctxWithSessionID(resp.GetSessionId()), &pb.Batch{Payload: payload}); err != nil {
+		t.Fatalf("WriteBatch: %v", err)
+	}
+	if sink.lastWrite == nil {
+		t.Fatal("expected WriteBatch to deliver unpacked data to SPI")
+	}
+}
+
+func TestWriteBatch_NonSinkSession_FailedPrecondition(t *testing.T) {
+	srv := buildTestServer(t, &mockSourceSPI{}, &mockProcessorSPI{}, &mockSinkSPI{})
+	resp, _ := srv.CreateSession(context.Background(), &pb.SessionCreateRequest{ComponentId: "src"})
+	_, err := srv.WriteBatch(ctxWithSessionID(resp.GetSessionId()), &pb.Batch{Payload: []byte("x")})
+	assertCode(t, err, codes.FailedPrecondition)
+}

@@ -45,6 +45,11 @@ type ComponentSpec struct {
 	// nil => ValidateConfig responds ok=true (schema-only validation).
 	Validate func(ctx context.Context, config []byte) (bool, string)
 
+	// DiscoverSchema is the optional schema-discovery hook (DB sources).
+	// nil => DiscoverSchema responds with an empty result. See
+	// SchemaDiscoverer for the public types.
+	DiscoverSchema func(ctx context.Context, config []byte) (*SchemaDiscovery, error)
+
 	// Exactly one factory is set, matching Kind.
 	Source    func() SourceSPI
 	Processor func() ProcessorSPI
@@ -139,7 +144,31 @@ func buildRegistration(p Plugin) (*pb.PluginDescriptor, []runtime.ComponentRegis
 		if c.Sink != nil {
 			reg.SinkFactory = func() runtime.SinkSPI { return c.Sink() }
 		}
+		if c.DiscoverSchema != nil {
+			reg.Discover = func(ctx context.Context, config []byte) (*pb.DiscoverSchemaResponse, error) {
+				disc, err := c.DiscoverSchema(ctx, config)
+				if err != nil {
+					return nil, err
+				}
+				return discoveryToProto(disc), nil
+			}
+		}
 		comps[i] = reg
 	}
 	return desc, comps
+}
+
+// discoveryToProto projects an sdk.SchemaDiscovery into the proto response.
+// Lives in the sdk package (not runtime) to avoid an sdk<->runtime cycle.
+func discoveryToProto(d *SchemaDiscovery) *pb.DiscoverSchemaResponse {
+	resp := &pb.DiscoverSchemaResponse{}
+	for _, t := range d.Tables {
+		resp.Tables = append(resp.Tables, &pb.TableInfo{Schema: t.Schema, Name: t.Name})
+	}
+	for _, c := range d.Columns {
+		resp.Columns = append(resp.Columns, &pb.ColumnInfo{
+			Name: c.Name, Type: c.Type, Nullable: c.Nullable,
+		})
+	}
+	return resp
 }

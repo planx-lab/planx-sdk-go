@@ -24,6 +24,12 @@ type ComponentRegistration struct {
 	// Validate is the optional live config check (Designer connectivity).
 	// nil => ValidateConfig responds ok=true (schema-only validation).
 	Validate func(ctx context.Context, config []byte) (bool, string)
+	// Discover is the optional schema-discovery hook (DB sources). nil =>
+	// DiscoverSchema responds with an empty result (non-DB sources). It
+	// returns *pb.DiscoverSchemaResponse directly (not an sdk type) to avoid
+	// an sdk<->runtime import cycle; the sdk package does the conversion in
+	// buildRegistration.
+	Discover func(ctx context.Context, config []byte) (*pb.DiscoverSchemaResponse, error)
 }
 
 // PluginServer implements all five protocol services for one plugin binary.

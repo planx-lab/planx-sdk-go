@@ -37,3 +37,22 @@ func (s *PluginServer) ValidateConfig(
 	ok2, msg := comp.Validate(ctx, req.GetConfig())
 	return &pb.ConfigValidationResult{Ok: ok2, Message: msg}, nil
 }
+
+// DiscoverSchema forwards to the component's optional Discover hook (DB
+// sources). With no hook it returns an empty response so non-DB sources
+// answer without error; the Designer hides the discovery UI in that case.
+// The hook returns *pb.DiscoverSchemaResponse directly; the sdk package
+// performs the *SchemaDiscovery->proto conversion in buildRegistration.
+func (s *PluginServer) DiscoverSchema(
+	ctx context.Context,
+	req *pb.DiscoverSchemaRequest,
+) (*pb.DiscoverSchemaResponse, error) {
+	comp, ok := s.components[req.GetComponentId()]
+	if !ok {
+		return nil, status.Errorf(codes.NotFound, "unknown component %q", req.GetComponentId())
+	}
+	if comp.Discover == nil {
+		return &pb.DiscoverSchemaResponse{}, nil
+	}
+	return comp.Discover(ctx, req.GetConfig())
+}

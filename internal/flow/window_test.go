@@ -1,6 +1,8 @@
 package flow
 
 import (
+	"context"
+	"runtime"
 	"sync"
 	"testing"
 	"time"
@@ -169,5 +171,132 @@ func TestWindow_ZeroInit(t *testing.T) {
 		t.Fatal("expected Acquire to block on zero window")
 	case <-time.After(50 * time.Millisecond):
 		// Expected
+	}
+}
+
+// --- AcquireContext: the production path (source_service.go calls this, not
+// Acquire). The cases below cover cancellation under backpressure — the
+// scenario that fires when a source stream is cancelled mid-flow-control-wait. ---
+
+func TestAcquireContext_PreCancelledContextReturnsImmediately(t *testing.T) {
+	w := NewWindow(0)
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	if err := w.AcquireContext(ctx); err == nil {
+		t.Fatal("expected error from pre-cancelled context, got nil")
+	}
+}
+
+func TestAcquireContext_AvailableSucceeds(t *testing.T) {
+	w := NewWindow(1)
+	if err := w.AcquireContext(context.Background()); err != nil {
+		t.Fatalf("expected nil error with available credit, got %v", err)
+	}
+	if w.value != 0 {
+		t.Fatalf("expected value 0 after acquire, got %d", w.value)
+	}
+}
+
+func TestAcquireContext_CancelledWhileBlockedReturnsCtxErr(t *testing.T) {
+	w := NewWindow(0) // no credit → AcquireContext blocks
+	ctx, cancel := context.WithCancel(context.Background())
+
+	errCh := make(chan error, 1)
+	go func() {
+		errCh <- w.AcquireContext(ctx)
+	}()
+
+	// Confirm it is actually blocked before we cancel.
+	select {
+	case err := <-errCh:
+		t.Fatalf("AcquireContext returned %v before cancellation; expected to block", err)
+	case <-time.After(50 * time.Millisecond):
+	}
+
+	cancel()
+
+	select {
+	case err := <-errCh:
+		if err == nil {
+			t.Fatal("expected ctx.Err() after cancellation while blocked, got nil")
+		}
+	case <-time.After(200 * time.Millisecond):
+		t.Fatal("AcquireContext did not return after context cancellation (broadcast goroutine leak?)")
+	}
+}
+
+func TestAcquireContext_ReleaseUnblocksBeforeCancel(t *testing.T) {
+	w := NewWindow(0)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	errCh := make(chan error, 1)
+	go func() {
+		errCh <- w.AcquireContext(ctx)
+	}()
+
+	// Let it park.
+	select {
+	case err := <-errCh:
+		t.Fatalf("returned %v before release; expected to block", err)
+	case <-time.After(50 * time.Millisecond):
+	}
+
+	w.Release(1)
+
+	select {
+	case err := <-errCh:
+		if err != nil {
+			t.Fatalf("expected nil error after Release unblocked it, got %v", err)
+		}
+	case <-time.After(200 * time.Millisecond):
+		t.Fatal("AcquireContext did not unblock after Release")
+	}
+	if w.value != 0 {
+		t.Fatalf("expected value 0 after the parked acquire consumed its credit, got %d", w.value)
+	}
+}
+
+// TestAcquireContext_NoGoroutineLeakOnRelease verifies the broadcast-watcher
+// goroutine spawned inside AcquireContext exits via the `done` channel when
+// Release unblocks the waiter (rather than waiting on ctx.Done).
+func TestAcquireContext_NoGoroutineLeakOnRelease(t *testing.T) {
+	before := runtime.NumGoroutine()
+
+	w := NewWindow(0)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	const N = 50
+	var wg sync.WaitGroup
+	for range N {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			_ = w.AcquireContext(ctx)
+		}()
+	}
+
+	// All N callers are parked, each having spawned a watcher goroutine.
+	time.Sleep(50 * time.Millisecond)
+
+	// Unblock every waiter via Release — watchers must exit via `done`.
+	for range N {
+		w.Release(1)
+	}
+	wg.Wait()
+
+	// Give the runtime a moment to tear down the watcher goroutines.
+	time.Sleep(100 * time.Millisecond)
+
+	after := runtime.NumGoroutine()
+	if leaked := after - before; leaked > 5 {
+		t.Fatalf("goroutine leak: started with %d, now %d (+%d)", before, after, leaked)
+	}
+	cancel() // cancelling now must not change the count (watchers already gone)
+	time.Sleep(50 * time.Millisecond)
+	if final := runtime.NumGoroutine(); final != after {
+		t.Fatalf("goroutine count changed after late cancel: %d -> %d (watcher goroutine still alive)", after, final)
 	}
 }

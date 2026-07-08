@@ -14,9 +14,24 @@ func (s *PluginServer) Discover(context.Context, *pb.Empty) (*pb.PluginDescripto
 	return s.descriptor, nil
 }
 
-// Health is the Engine-pulled readiness probe. Default: READY. (Plugins that
-// need a richer probe will get a hook in a later plan — YAGNI for now.)
-func (s *PluginServer) Health(context.Context, *pb.Empty) (*pb.HealthStatus, error) {
+// Health is the Engine-pulled readiness probe. It aggregates every component's
+// optional Health hook: if any registered hook reports unhealthy, the plugin is
+// NOT_READY. Components without a hook are considered healthy. This is a REAL
+// probe — a plugin whose dependency (e.g. its DB) is down reports NOT_READY so
+// the Engine can stop routing traffic to it, rather than always claiming READY.
+func (s *PluginServer) Health(ctx context.Context, _ *pb.Empty) (*pb.HealthStatus, error) {
+	for _, comp := range s.components {
+		if comp.Health == nil {
+			continue
+		}
+		ok, msg := comp.Health(ctx)
+		if !ok {
+			return &pb.HealthStatus{
+				State:   pb.HealthStatus_STATE_NOT_READY,
+				Message: comp.Descriptor.GetId() + ": " + msg,
+			}, nil
+		}
+	}
 	return &pb.HealthStatus{State: pb.HealthStatus_STATE_READY}, nil
 }
 

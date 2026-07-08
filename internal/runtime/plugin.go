@@ -30,6 +30,11 @@ type ComponentRegistration struct {
 	// an sdk<->runtime import cycle; the sdk package does the conversion in
 	// buildRegistration.
 	Discover func(ctx context.Context, config []byte) (*pb.DiscoverSchemaResponse, error)
+	// Health is the optional live-readiness hook (e.g. DB connectivity). nil =>
+	// the component is considered healthy. The PluginServer.Health RPC returns
+	// STATE_NOT_READY if ANY component's hook reports unhealthy (most-conservative
+	// aggregation), so the Engine never routes traffic to a half-broken plugin.
+	Health func(ctx context.Context) (bool, string)
 }
 
 // PluginServer implements all five protocol services for one plugin binary.

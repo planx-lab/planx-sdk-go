@@ -50,6 +50,12 @@ type ComponentSpec struct {
 	// SchemaDiscoverer for the public types.
 	DiscoverSchema func(ctx context.Context, config []byte) (*SchemaDiscovery, error)
 
+	// Health is the optional live-readiness probe (e.g. DB connectivity). nil =>
+	// the component is considered healthy. The PluginServer.Health RPC returns
+	// STATE_NOT_READY if ANY component's hook reports unhealthy, so the Engine
+	// can stop routing traffic to a plugin whose dependency is down.
+	Health func(ctx context.Context) (bool, string)
+
 	// Exactly one factory is set, matching Kind.
 	Source    func() SourceSPI
 	Processor func() ProcessorSPI
@@ -134,6 +140,7 @@ func buildRegistration(p Plugin) (*pb.PluginDescriptor, []runtime.ComponentRegis
 		reg := runtime.ComponentRegistration{
 			Descriptor: descC,
 			Validate:   c.Validate, // identical anonymous func type; no wrapper needed
+			Health:     c.Health,   // identical anonymous func type; no wrapper needed
 		}
 		if c.Source != nil {
 			reg.SourceFactory = func() runtime.SourceSPI { return c.Source() }

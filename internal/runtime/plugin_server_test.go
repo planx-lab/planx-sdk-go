@@ -168,6 +168,62 @@ func TestHealth_DefaultReady(t *testing.T) {
 	}
 }
 
+// TestHealth_HookReportsNotReady verifies Health is a REAL probe, not a
+// hardcoded READY: when a component's Health hook reports unhealthy, the RPC
+// must return STATE_NOT_READY (and the hook's message) so the Engine can act
+// on it instead of always seeing READY.
+func TestHealth_HookReportsNotReady(t *testing.T) {
+	srv, err := NewPluginServer(newDesc("p",
+		&pb.ComponentDescriptor{Id: "src", Kind: pb.ComponentKind_COMPONENT_KIND_SOURCE},
+	), []ComponentRegistration{
+		{
+			Descriptor:    &pb.ComponentDescriptor{Id: "src", Kind: pb.ComponentKind_COMPONENT_KIND_SOURCE},
+			SourceFactory: func() SourceSPI { return &mockSourceSPI{} },
+			Health: func(_ context.Context) (bool, string) {
+				return false, "database unreachable"
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf("NewPluginServer: %v", err)
+	}
+	h, err := srv.Health(context.Background(), &pb.Empty{})
+	if err != nil {
+		t.Fatalf("Health: %v", err)
+	}
+	if h.GetState() != pb.HealthStatus_STATE_NOT_READY {
+		t.Fatalf("expected NOT_READY when hook reports unhealthy, got %v", h.GetState())
+	}
+	if h.GetMessage() != "src: database unreachable" {
+		t.Errorf("expected message 'src: database unreachable', got %q", h.GetMessage())
+	}
+}
+
+// TestHealth_HookReportsReady verifies a healthy hook yields STATE_READY.
+func TestHealth_HookReportsReady(t *testing.T) {
+	srv, err := NewPluginServer(newDesc("p",
+		&pb.ComponentDescriptor{Id: "src", Kind: pb.ComponentKind_COMPONENT_KIND_SOURCE},
+	), []ComponentRegistration{
+		{
+			Descriptor:    &pb.ComponentDescriptor{Id: "src", Kind: pb.ComponentKind_COMPONENT_KIND_SOURCE},
+			SourceFactory: func() SourceSPI { return &mockSourceSPI{} },
+			Health: func(_ context.Context) (bool, string) {
+				return true, ""
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf("NewPluginServer: %v", err)
+	}
+	h, err := srv.Health(context.Background(), &pb.Empty{})
+	if err != nil {
+		t.Fatalf("Health: %v", err)
+	}
+	if h.GetState() != pb.HealthStatus_STATE_READY {
+		t.Fatalf("expected READY from healthy hook, got %v", h.GetState())
+	}
+}
+
 func TestValidateConfig_UnknownComponent(t *testing.T) {
 	srv := buildTestServer(t, &mockSourceSPI{}, &mockProcessorSPI{}, &mockSinkSPI{})
 	_, err := srv.ValidateConfig(context.Background(), &pb.ConfigValidationRequest{ComponentId: "nope"})

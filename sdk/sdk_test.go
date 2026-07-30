@@ -6,11 +6,15 @@ import (
 )
 
 // TestBatchIsAny verifies that sdk.Batch values are assignable to any.
-// After the type alias change (Batch = any), this remains trivially true.
+// Batch is a type alias for any, so this is trivially true; the test pins
+// the alias so a future change to Batch's underlying type fails here first.
 func TestBatchIsAny(t *testing.T) {
-	var _ any = Batch("hello")
-	var _ any = Batch(42)
-	var _ any = Batch(nil)
+	values := []any{Batch("hello"), Batch(42), Batch(nil)}
+	for i, v := range values {
+		if v == nil && i != 2 {
+			t.Fatalf("Batch(%d) unexpectedly nil", i)
+		}
+	}
 }
 
 // testSource implements SourceSPI for testing.

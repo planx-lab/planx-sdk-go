@@ -140,3 +140,53 @@ func TestCodec_PackedBytesAreDeterministic(t *testing.T) {
 		}
 	}
 }
+
+// TestCodec_StandardBatchShapesRoundtripWithoutRegistration verifies the codec
+// can pack AND unpack every standard batch shape a Planx plugin may emit —
+// WITHOUT the consumer calling RegisterType first. This is the "bytes-opaque"
+// contract: a Source (one OS process) emits a type, a Sink/Processor (a
+// DIFFERENT process with its own gob type registry) must decode it without
+// pre-registering the Source's concrete types.
+//
+// Today this fails: gob's `any` interface encoding writes the concrete type
+// name, and the decoder requires that name registered in its own process.
+// The fix: the SDK's codec init registers the full standard type set so every
+// SDK process (Source/Processor/Sink) shares the same type universe.
+func TestCodec_StandardBatchShapesRoundtripWithoutRegistration(t *testing.T) {
+	codec := NewCodec()
+	// These are the real batch shapes emitted by Planx plugins:
+	//   [][]string          — CSV source (rows of string fields)
+	//   []map[string]any    — processors (normalized rows)
+	//   map[string]any      — single-row batch
+	//   map[string]string   — string-valued single row (hello-style source)
+	//   []map[string]string — string-valued rows
+	//   []string            — text-template processor output
+	standardShapes := []struct {
+		name string
+		val  any
+	}{
+		{"[][]string", [][]string{{"a", "b"}, {"c", "d"}}},
+		{"[]map[string]any", []map[string]any{{"id": float64(1), "name": "x"}}},
+		{"map[string]any", map[string]any{"id": float64(1), "name": "x"}},
+		{"map[string]string", map[string]string{"k": "v"}},
+		{"[]map[string]string", []map[string]string{{"k": "v"}}},
+		{"[]string", []string{"rendered", "output"}},
+	}
+
+	for _, tc := range standardShapes {
+		t.Run(tc.name, func(t *testing.T) {
+			packed, err := codec.Pack(tc.val)
+			if err != nil {
+				t.Fatalf("Pack(%s): %v", tc.name, err)
+			}
+			unpacked, err := codec.Unpack(packed)
+			if err != nil {
+				t.Fatalf("Unpack(%s): %v (decoder must know this type without per-plugin registration)", tc.name, err)
+			}
+			// The unpacked value must be usable — not a nil/opaque blob.
+			if unpacked == nil {
+				t.Fatalf("Unpack(%s): got nil, want the original value", tc.name)
+			}
+		})
+	}
+}

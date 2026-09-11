@@ -2,11 +2,10 @@ package runtime
 
 import (
 	"context"
-	"fmt"
-	"os"
 
 	pb "github.com/planx-lab/planx-proto/gen/go/planx/plugin/v4"
 	"github.com/planx-lab/planx-sdk-go/internal/flow"
+	"github.com/planx-lab/planx-sdk-go/internal/observability"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -59,6 +58,7 @@ func (s *PluginServer) CreateSession(
 
 	id := generateSessionID()
 	s.sessions.Add(id, sess)
+	observability.IncActiveSession()
 	return &pb.SessionCreateResponse{SessionId: id}, nil
 }
 
@@ -70,8 +70,12 @@ func (s *PluginServer) CloseSession(
 
 	sess, ok := s.sessions.DeleteAndGet(req.GetSessionId())
 	if ok {
+		observability.DecActiveSession()
 		if err := sess.close(); err != nil {
-			fmt.Fprintf(os.Stderr, "[planx-sdk] spi.Close error: %v\n", err)
+			observability.Logger().Error("planx-sdk spi.Close error",
+				"session_id", req.GetSessionId(),
+				"err", err,
+			)
 		}
 	}
 	return &pb.SessionCloseResponse{}, nil

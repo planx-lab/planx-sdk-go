@@ -2,10 +2,9 @@ package runtime
 
 import (
 	"context"
-	"fmt"
-	"os"
 	"runtime/debug"
 
+	"github.com/planx-lab/planx-sdk-go/internal/observability"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -21,7 +20,11 @@ func recoveryUnaryInterceptor(
 ) (resp any, err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			fmt.Fprintf(os.Stderr, "[planx-sdk] panic recovered in unary %s: %v\n%s\n", info.FullMethod, r, debug.Stack())
+			observability.Logger().Error("planx-sdk panic recovered in unary RPC",
+				"method", info.FullMethod,
+				"panic", r,
+				"stack", string(debug.Stack()),
+			)
 			err = status.Errorf(codes.Internal, "plugin panic recovered")
 		}
 	}()
@@ -38,7 +41,11 @@ func recoveryStreamInterceptor(
 ) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			fmt.Fprintf(os.Stderr, "[planx-sdk] panic recovered in stream %s: %v\n%s\n", info.FullMethod, r, debug.Stack())
+			observability.Logger().Error("planx-sdk panic recovered in stream RPC",
+				"method", info.FullMethod,
+				"panic", r,
+				"stack", string(debug.Stack()),
+			)
 			err = status.Errorf(codes.Internal, "plugin panic recovered")
 		}
 	}()

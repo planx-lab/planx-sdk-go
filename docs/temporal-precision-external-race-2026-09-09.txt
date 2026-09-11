@@ -1,0 +1,504 @@
+Temporal precision regression 2026-09-09
+GOCACHE=/tmp/planx-builtin-gocache GOTOOLCHAIN=local GOWORK=off GOPROXY=off GOSUMDB=off
+
+MODULE planx-sdk-go
+COMMAND go test -mod=readonly -race -tags=integration -count=1 -timeout=180s -v ./...
+=== RUN   TestCodec_PackUnpackRoundtrip
+--- PASS: TestCodec_PackUnpackRoundtrip (0.00s)
+=== RUN   TestCodec_PackUnpackEmptyData
+--- PASS: TestCodec_PackUnpackEmptyData (0.00s)
+=== RUN   TestCodec_UnpackInvalidData
+--- PASS: TestCodec_UnpackInvalidData (0.00s)
+=== RUN   TestCodec_UnpackEmptyBytes
+--- PASS: TestCodec_UnpackEmptyBytes (0.00s)
+=== RUN   TestCodec_PackPreservesAllKeys
+--- PASS: TestCodec_PackPreservesAllKeys (0.00s)
+=== RUN   TestCodec_PackedBytesAreDeterministic
+--- PASS: TestCodec_PackedBytesAreDeterministic (0.00s)
+=== RUN   TestCodec_StandardBatchShapesRoundtripWithoutRegistration
+=== RUN   TestCodec_StandardBatchShapesRoundtripWithoutRegistration/[][]string
+=== RUN   TestCodec_StandardBatchShapesRoundtripWithoutRegistration/[]map[string]any
+=== RUN   TestCodec_StandardBatchShapesRoundtripWithoutRegistration/map[string]any
+=== RUN   TestCodec_StandardBatchShapesRoundtripWithoutRegistration/map[string]string
+=== RUN   TestCodec_StandardBatchShapesRoundtripWithoutRegistration/[]map[string]string
+=== RUN   TestCodec_StandardBatchShapesRoundtripWithoutRegistration/[]string
+--- PASS: TestCodec_StandardBatchShapesRoundtripWithoutRegistration (0.00s)
+    --- PASS: TestCodec_StandardBatchShapesRoundtripWithoutRegistration/[][]string (0.00s)
+    --- PASS: TestCodec_StandardBatchShapesRoundtripWithoutRegistration/[]map[string]any (0.00s)
+    --- PASS: TestCodec_StandardBatchShapesRoundtripWithoutRegistration/map[string]any (0.00s)
+    --- PASS: TestCodec_StandardBatchShapesRoundtripWithoutRegistration/map[string]string (0.00s)
+    --- PASS: TestCodec_StandardBatchShapesRoundtripWithoutRegistration/[]map[string]string (0.00s)
+    --- PASS: TestCodec_StandardBatchShapesRoundtripWithoutRegistration/[]string (0.00s)
+=== RUN   TestTypedBatchUsesPublicVersionedEncoding
+--- PASS: TestTypedBatchUsesPublicVersionedEncoding (0.00s)
+PASS
+ok  	github.com/planx-lab/planx-sdk-go/internal/batch	2.305s
+=== RUN   TestWindow_AcquireRelease
+--- PASS: TestWindow_AcquireRelease (0.00s)
+=== RUN   TestWindow_AcquireBlocksAtZero
+--- PASS: TestWindow_AcquireBlocksAtZero (0.05s)
+=== RUN   TestWindow_ReleaseWakesBlocked
+--- PASS: TestWindow_ReleaseWakesBlocked (0.02s)
+=== RUN   TestWindow_ConcurrentAcquireRelease
+--- PASS: TestWindow_ConcurrentAcquireRelease (0.01s)
+=== RUN   TestWindow_ReleaseMultiple
+--- PASS: TestWindow_ReleaseMultiple (0.00s)
+=== RUN   TestWindow_ZeroInit
+--- PASS: TestWindow_ZeroInit (0.05s)
+=== RUN   TestAcquireContext_PreCancelledContextReturnsImmediately
+--- PASS: TestAcquireContext_PreCancelledContextReturnsImmediately (0.00s)
+=== RUN   TestAcquireContext_AvailableSucceeds
+--- PASS: TestAcquireContext_AvailableSucceeds (0.00s)
+=== RUN   TestAcquireContext_CancelledWhileBlockedReturnsCtxErr
+--- PASS: TestAcquireContext_CancelledWhileBlockedReturnsCtxErr (0.05s)
+=== RUN   TestAcquireContext_ReleaseUnblocksBeforeCancel
+--- PASS: TestAcquireContext_ReleaseUnblocksBeforeCancel (0.05s)
+=== RUN   TestAcquireContext_NoGoroutineLeakOnRelease
+--- PASS: TestAcquireContext_NoGoroutineLeakOnRelease (0.21s)
+PASS
+ok  	github.com/planx-lab/planx-sdk-go/internal/flow	3.518s
+=== RUN   TestLogger_NeverNil
+--- PASS: TestLogger_NeverNil (0.00s)
+=== RUN   TestSetLogger_EmitsJSON
+--- PASS: TestSetLogger_EmitsJSON (0.00s)
+=== RUN   TestSetLogger_NilRestoresDefault
+--- PASS: TestSetLogger_NilRestoresDefault (0.00s)
+=== RUN   TestMethodInfo
+--- PASS: TestMethodInfo (0.00s)
+=== RUN   TestCodeLabel
+--- PASS: TestCodeLabel (0.00s)
+=== RUN   TestMetricsUnaryInterceptor_SuccessIncrementsCounter
+--- PASS: TestMetricsUnaryInterceptor_SuccessIncrementsCounter (0.00s)
+=== RUN   TestMetricsUnaryInterceptor_ErrorLabelsByCode
+--- PASS: TestMetricsUnaryInterceptor_ErrorLabelsByCode (0.00s)
+=== RUN   TestMetricsUnaryInterceptor_ErrorRecordsHistogram
+--- PASS: TestMetricsUnaryInterceptor_ErrorRecordsHistogram (0.00s)
+=== RUN   TestMetricsUnaryInterceptor_PanicStillObserves
+--- PASS: TestMetricsUnaryInterceptor_PanicStillObserves (0.00s)
+=== RUN   TestMetricsStreamInterceptor_IncrementsCounter
+--- PASS: TestMetricsStreamInterceptor_IncrementsCounter (0.00s)
+=== RUN   TestActiveSessionGauge
+--- PASS: TestActiveSessionGauge (0.00s)
+=== RUN   TestRegistryExposesAllMetrics
+--- PASS: TestRegistryExposesAllMetrics (0.00s)
+=== RUN   TestStartMetricsServer_DisabledByDefault
+--- PASS: TestStartMetricsServer_DisabledByDefault (0.00s)
+=== RUN   TestStartMetricsServer_ServesMetrics
+{"time":"2026-09-09T02:41:24.828152+08:00","level":"INFO","msg":"planx-sdk metrics server listening","addr":"127.0.0.1:<PORT>"}
+--- PASS: TestStartMetricsServer_ServesMetrics (0.01s)
+PASS
+ok  	github.com/planx-lab/planx-sdk-go/internal/observability	3.523s
+=== RUN   TestNewPluginServer_NilDescriptor
+--- PASS: TestNewPluginServer_NilDescriptor (0.00s)
+=== RUN   TestNewPluginServer_NoComponents
+--- PASS: TestNewPluginServer_NoComponents (0.00s)
+=== RUN   TestNewPluginServer_DuplicateComponentID
+--- PASS: TestNewPluginServer_DuplicateComponentID (0.00s)
+=== RUN   TestNewPluginServer_EmptyComponentID
+--- PASS: TestNewPluginServer_EmptyComponentID (0.00s)
+=== RUN   TestNewPluginServer_Success
+--- PASS: TestNewPluginServer_Success (0.00s)
+=== RUN   TestCreateSession_UnknownComponent
+--- PASS: TestCreateSession_UnknownComponent (0.00s)
+=== RUN   TestCreateSession_Source_InitsAndReturnsID
+--- PASS: TestCreateSession_Source_InitsAndReturnsID (0.00s)
+=== RUN   TestCreateSession_Source_InitFailure
+--- PASS: TestCreateSession_Source_InitFailure (0.00s)
+=== RUN   TestCloseSession_CallsSPICloseAndRemoves
+--- PASS: TestCloseSession_CallsSPICloseAndRemoves (0.00s)
+=== RUN   TestCloseSession_UnknownSession_NoError
+--- PASS: TestCloseSession_UnknownSession_NoError (0.00s)
+=== RUN   TestAck_Source_ReleasesWindow
+--- PASS: TestAck_Source_ReleasesWindow (0.00s)
+=== RUN   TestAck_UnknownSession_NotFound
+--- PASS: TestAck_UnknownSession_NotFound (0.00s)
+=== RUN   TestDiscover_ReturnsDescriptor
+--- PASS: TestDiscover_ReturnsDescriptor (0.00s)
+=== RUN   TestHealth_DefaultReady
+--- PASS: TestHealth_DefaultReady (0.00s)
+=== RUN   TestHealth_HookReportsNotReady
+--- PASS: TestHealth_HookReportsNotReady (0.00s)
+=== RUN   TestHealth_HookReportsReady
+--- PASS: TestHealth_HookReportsReady (0.00s)
+=== RUN   TestValidateConfig_UnknownComponent
+--- PASS: TestValidateConfig_UnknownComponent (0.00s)
+=== RUN   TestValidateConfig_NoHook_DefaultsOk
+--- PASS: TestValidateConfig_NoHook_DefaultsOk (0.00s)
+=== RUN   TestValidateConfig_WithHook
+--- PASS: TestValidateConfig_WithHook (0.00s)
+=== RUN   TestOpenStream_SourceEOF_ClosesCleanly
+--- PASS: TestOpenStream_SourceEOF_ClosesCleanly (0.00s)
+=== RUN   TestOpenStream_RealError_Propagates
+--- PASS: TestOpenStream_RealError_Propagates (0.00s)
+=== RUN   TestOpenStream_UnknownSession_NotFound
+--- PASS: TestOpenStream_UnknownSession_NotFound (0.00s)
+=== RUN   TestOpenStream_NonSourceSession_FailedPrecondition
+--- PASS: TestOpenStream_NonSourceSession_FailedPrecondition (0.00s)
+=== RUN   TestOpenStream_SendsBatches
+--- PASS: TestOpenStream_SendsBatches (0.00s)
+=== RUN   TestProcess_MissingMetadata
+--- PASS: TestProcess_MissingMetadata (0.00s)
+=== RUN   TestProcess_MissingSessionID
+--- PASS: TestProcess_MissingSessionID (0.00s)
+=== RUN   TestProcess_UnknownSession
+--- PASS: TestProcess_UnknownSession (0.00s)
+=== RUN   TestProcess_ValidSession
+--- PASS: TestProcess_ValidSession (0.00s)
+=== RUN   TestProcess_NonProcessorSession_FailedPrecondition
+--- PASS: TestProcess_NonProcessorSession_FailedPrecondition (0.00s)
+=== RUN   TestWriteBatch_MissingMetadata
+--- PASS: TestWriteBatch_MissingMetadata (0.00s)
+=== RUN   TestWriteBatch_UnknownSession
+--- PASS: TestWriteBatch_UnknownSession (0.00s)
+=== RUN   TestWriteBatch_ValidSession
+--- PASS: TestWriteBatch_ValidSession (0.00s)
+=== RUN   TestWriteBatch_NonSinkSession_FailedPrecondition
+--- PASS: TestWriteBatch_NonSinkSession_FailedPrecondition (0.00s)
+=== RUN   TestNewPluginServer_KindFactoryMismatch_SourceButNoFactory
+--- PASS: TestNewPluginServer_KindFactoryMismatch_SourceButNoFactory (0.00s)
+=== RUN   TestNewPluginServer_KindFactoryMismatch_WrongFactory
+--- PASS: TestNewPluginServer_KindFactoryMismatch_WrongFactory (0.00s)
+=== RUN   TestNewPluginServer_UnsupportedKind
+--- PASS: TestNewPluginServer_UnsupportedKind (0.00s)
+=== RUN   TestNewPluginServer_ProcessorFactory_OK
+--- PASS: TestNewPluginServer_ProcessorFactory_OK (0.00s)
+=== RUN   TestNewPluginServer_SinkFactory_OK
+--- PASS: TestNewPluginServer_SinkFactory_OK (0.00s)
+=== RUN   TestAck_NonSourceSession_NoOp
+--- PASS: TestAck_NonSourceSession_NoOp (0.00s)
+=== RUN   TestProcess_SPIError_Propagates
+--- PASS: TestProcess_SPIError_Propagates (0.00s)
+=== RUN   TestWriteBatch_SPIError_Propagates
+--- PASS: TestWriteBatch_SPIError_Propagates (0.00s)
+=== RUN   TestRecoveryUnaryInterceptor_NoPanic
+--- PASS: TestRecoveryUnaryInterceptor_NoPanic (0.00s)
+=== RUN   TestRecoveryUnaryInterceptor_Panic
+{"time":"2026-09-09T02:41:26.453625+08:00","level":"ERROR","msg":"planx-sdk panic recovered in unary RPC","method":"/test/Method","panic":"boom","stack":"goroutine 77 [running]:\nruntime/debug.Stack()\n\t/usr/local/go/src/runtime/debug/stack.go:26 +0x6c\ngithub.com/planx-lab/planx-sdk-go/internal/runtime.recoveryUnaryInterceptor.func1()\n\t<HOME>/workspace/repo/github.com/planx-lab/planx-sdk-go/internal/runtime/recovery.go:26 +0x50\npanic({0x1039253a0?, 0x103849570?})\n\t/usr/local/go/src/runtime/panic.go:859 +0x120\ngithub.com/planx-lab/planx-sdk-go/internal/runtime.TestRecoveryUnaryInterceptor_Panic.func1({0x1033125e0?, 0xf?}, {0x0?, 0x0?})\n\t<HOME>/workspace/repo/github.com/planx-lab/planx-sdk-go/internal/runtime/recovery_test.go:33 +0x34\ngithub.com/planx-lab/planx-sdk-go/internal/runtime.recoveryUnaryInterceptor({0x1039c48b8, 0x1049b8600}, {0x1039253a0, 0x1038494b0}, 0xc000097e88, 0x1039c9570)\n\t<HOME>/workspace/repo/github.com/planx-lab/planx-sdk-go/internal/runtime/recovery.go:31 +0xac\ngithub.com/planx-lab/planx-sdk-go/internal/runtime.TestRecoveryUnaryInterceptor_Panic(0xc0003b2488)\n\t<HOME>/workspace/repo/github.com/planx-lab/planx-sdk-go/internal/runtime/recovery_test.go:36 +0x8c\ntesting.tRunner(0xc0003b2488, 0x1039c93c8)\n\t/usr/local/go/src/testing/testing.go:2193 +0x168\ncreated by testing.(*T).Run in goroutine 1\n\t/usr/local/go/src/testing/testing.go:2258 +0x7c0\n"}
+--- PASS: TestRecoveryUnaryInterceptor_Panic (0.00s)
+=== RUN   TestRecoveryStreamInterceptor_NoPanic
+--- PASS: TestRecoveryStreamInterceptor_NoPanic (0.00s)
+=== RUN   TestRecoveryStreamInterceptor_Panic
+{"time":"2026-09-09T02:41:26.454041+08:00","level":"ERROR","msg":"planx-sdk panic recovered in stream RPC","method":"/test/Stream","panic":"stream boom","stack":"goroutine 79 [running]:\nruntime/debug.Stack()\n\t/usr/local/go/src/runtime/debug/stack.go:26 +0x6c\ngithub.com/planx-lab/planx-sdk-go/internal/runtime.recoveryStreamInterceptor.func1()\n\t<HOME>/workspace/repo/github.com/planx-lab/planx-sdk-go/internal/runtime/recovery.go:47 +0x50\npanic({0x1039253a0?, 0x103849560?})\n\t/usr/local/go/src/runtime/panic.go:859 +0x120\ngithub.com/planx-lab/planx-sdk-go/internal/runtime.TestRecoveryStreamInterceptor_Panic.func1({0x103a4b560?, 0xc0003b0510?}, {0xc000097de8?, 0x102a986fc?})\n\t<HOME>/workspace/repo/github.com/planx-lab/planx-sdk-go/internal/runtime/recovery_test.go:76 +0x34\ngithub.com/planx-lab/planx-sdk-go/internal/runtime.recoveryStreamInterceptor({0x1039253a0, 0x1038494e0}, {0x1039c5ff8, 0xc0003b0510}, 0xc000097e90, 0x1039c9560)\n\t<HOME>/workspace/repo/github.com/planx-lab/planx-sdk-go/internal/runtime/recovery.go:52 +0xa8\ngithub.com/planx-lab/planx-sdk-go/internal/runtime.TestRecoveryStreamInterceptor_Panic(0xc0003b2908)\n\t<HOME>/workspace/repo/github.com/planx-lab/planx-sdk-go/internal/runtime/recovery_test.go:79 +0xc0\ntesting.tRunner(0xc0003b2908, 0x1039c93b8)\n\t/usr/local/go/src/testing/testing.go:2193 +0x168\ncreated by testing.(*T).Run in goroutine 1\n\t/usr/local/go/src/testing/testing.go:2258 +0x7c0\n"}
+--- PASS: TestRecoveryStreamInterceptor_Panic (0.00s)
+=== RUN   TestGenerateSessionID
+--- PASS: TestGenerateSessionID (0.00s)
+=== RUN   TestTransport_DiscoverOverRealConnection
+--- PASS: TestTransport_DiscoverOverRealConnection (0.00s)
+=== RUN   TestTransport_CreateSessionThenProcessorDispatchedByMetadata
+--- PASS: TestTransport_CreateSessionThenProcessorDispatchedByMetadata (0.00s)
+=== RUN   TestTransport_MissingMetadataReturnsInvalidArgument
+--- PASS: TestTransport_MissingMetadataReturnsInvalidArgument (0.00s)
+=== RUN   TestTypedTransportSourceProcessorSink
+=== RUN   TestTypedTransportSourceProcessorSink/records
+=== RUN   TestTypedTransportSourceProcessorSink/empty
+--- PASS: TestTypedTransportSourceProcessorSink (0.01s)
+    --- PASS: TestTypedTransportSourceProcessorSink/records (0.01s)
+    --- PASS: TestTypedTransportSourceProcessorSink/empty (0.00s)
+=== RUN   TestExternalProcessesTypedChain
+    external_process_test.go:60: COMMAND: cd <HOME>/workspace/repo/github.com/planx-lab/planx-sdk-go && go build -mod=readonly -o /tmp/planx-typed-external-1472895503/typed-source-fixture ./internal/runtime/testdata/typed-source
+    external_process_test.go:64: EXIT build planx-sdk-go: 0
+    external_process_test.go:65: HANDSHAKE typed-source-fixture: {"protocol":"v4","address":"127.0.0.1:<PORT>"}
+    external_process_test.go:73: Discover typed-source-fixture: 1 components
+    external_process_test.go:60: COMMAND: cd <HOME>/workspace/repo/github.com/planx-lab/planx-plugin-template-go && go build -mod=readonly -o /tmp/planx-typed-external-1472895503/template ./cmd/plugin
+    external_process_test.go:64: EXIT build planx-plugin-template-go: 0
+    external_process_test.go:65: HANDSHAKE template: {"protocol":"v4","address":"127.0.0.1:<PORT>"}
+    external_process_test.go:73: Discover template: 3 components
+    external_process_test.go:60: COMMAND: cd <HOME>/workspace/repo/github.com/planx-lab/planx-plugin-processor-passthrough && go build -mod=readonly -o /tmp/planx-typed-external-1472895503/processor-passthrough ./cmd/plugin
+    external_process_test.go:64: EXIT build planx-plugin-processor-passthrough: 0
+    external_process_test.go:65: HANDSHAKE processor-passthrough: {"protocol":"v4","address":"127.0.0.1:<PORT>"}
+    external_process_test.go:73: Discover processor-passthrough: 1 components
+    external_process_test.go:60: COMMAND: cd <HOME>/workspace/repo/github.com/planx-lab/planx-plugin-sink-stdout && go build -mod=readonly -o /tmp/planx-typed-external-1472895503/sink-stdout ./cmd/plugin
+    external_process_test.go:64: EXIT build planx-plugin-sink-stdout: 0
+    external_process_test.go:65: HANDSHAKE sink-stdout: {"protocol":"v4","address":"127.0.0.1:<PORT>"}
+    external_process_test.go:73: Discover sink-stdout: 1 components
+    external_process_test.go:89: actual template source: EOF skeleton verified
+    external_process_test.go:165: typed batch 0: 1 records, two processors, two sinks, exact values and lineage preserved
+    external_process_test.go:165: typed batch 1: 0 records, two processors, two sinks, exact values and lineage preserved
+--- PASS: TestExternalProcessesTypedChain (8.98s)
+=== RUN   TestDiscoverSchema_Implemented
+--- PASS: TestDiscoverSchema_Implemented (0.00s)
+=== RUN   TestDiscoverSchema_NotImplemented
+--- PASS: TestDiscoverSchema_NotImplemented (0.00s)
+=== RUN   TestDiscoverSchema_UnknownComponent
+--- PASS: TestDiscoverSchema_UnknownComponent (0.00s)
+=== RUN   TestDiscoverSchema_DiscoverError
+--- PASS: TestDiscoverSchema_DiscoverError (0.00s)
+PASS
+ok  	github.com/planx-lab/planx-sdk-go/internal/runtime	14.029s
+=== RUN   TestManager_AddAndGet
+--- PASS: TestManager_AddAndGet (0.00s)
+=== RUN   TestManager_GetNonExistent
+--- PASS: TestManager_GetNonExistent (0.00s)
+=== RUN   TestManager_AddOverwrites
+--- PASS: TestManager_AddOverwrites (0.00s)
+=== RUN   TestManager_Remove
+--- PASS: TestManager_Remove (0.00s)
+=== RUN   TestManager_RemoveNonExistent
+--- PASS: TestManager_RemoveNonExistent (0.00s)
+=== RUN   TestManager_All
+--- PASS: TestManager_All (0.00s)
+=== RUN   TestManager_AllEmpty
+--- PASS: TestManager_AllEmpty (0.00s)
+=== RUN   TestManager_ConcurrentAccess
+--- PASS: TestManager_ConcurrentAccess (0.00s)
+=== RUN   TestManager_DeleteAndGet_Existing
+--- PASS: TestManager_DeleteAndGet_Existing (0.00s)
+=== RUN   TestManager_DeleteAndGet_Missing
+--- PASS: TestManager_DeleteAndGet_Missing (0.00s)
+=== RUN   TestManager_DeleteAndGet_Concurrent
+--- PASS: TestManager_DeleteAndGet_Concurrent (0.00s)
+=== RUN   TestManager_GenericType
+--- PASS: TestManager_GenericType (0.00s)
+PASS
+ok  	github.com/planx-lab/planx-sdk-go/internal/session	5.757s
+=== RUN   TestNewSessionID_NotEmpty
+--- PASS: TestNewSessionID_NotEmpty (0.00s)
+=== RUN   TestNewSessionID_UUIDFormat
+--- PASS: TestNewSessionID_UUIDFormat (0.00s)
+=== RUN   TestNewSessionID_Unique
+--- PASS: TestNewSessionID_Unique (0.00s)
+PASS
+ok  	github.com/planx-lab/planx-sdk-go/internal/util	4.153s
+=== RUN   TestPublicJSONNames
+--- PASS: TestPublicJSONNames (0.00s)
+=== RUN   TestFloat64EncodingPreservesBits
+--- PASS: TestFloat64EncodingPreservesBits (0.00s)
+=== RUN   TestEstimatedBytesAccountsForRetainedVariableStorage
+--- PASS: TestEstimatedBytesAccountsForRetainedVariableStorage (0.00s)
+=== RUN   TestTemporalPrecisionSchema
+--- PASS: TestTemporalPrecisionSchema (0.00s)
+=== RUN   TestTemporalPrecisionAlignment
+=== RUN   TestTemporalPrecisionAlignment/datetime/unknown
+=== RUN   TestTemporalPrecisionAlignment/datetime/whole_seconds
+=== RUN   TestTemporalPrecisionAlignment/datetime/whole_seconds_rejects_fraction
+=== RUN   TestTemporalPrecisionAlignment/datetime/microseconds
+=== RUN   TestTemporalPrecisionAlignment/datetime/microseconds_rejects_nanoseconds
+=== RUN   TestTemporalPrecisionAlignment/datetime/nanoseconds
+=== RUN   TestTemporalPrecisionAlignment/timestamp/unknown
+=== RUN   TestTemporalPrecisionAlignment/timestamp/whole_seconds
+=== RUN   TestTemporalPrecisionAlignment/timestamp/whole_seconds_rejects_fraction
+=== RUN   TestTemporalPrecisionAlignment/timestamp/microseconds
+=== RUN   TestTemporalPrecisionAlignment/timestamp/microseconds_rejects_nanoseconds
+=== RUN   TestTemporalPrecisionAlignment/timestamp/nanoseconds
+--- PASS: TestTemporalPrecisionAlignment (0.00s)
+    --- PASS: TestTemporalPrecisionAlignment/datetime/unknown (0.00s)
+    --- PASS: TestTemporalPrecisionAlignment/datetime/whole_seconds (0.00s)
+    --- PASS: TestTemporalPrecisionAlignment/datetime/whole_seconds_rejects_fraction (0.00s)
+    --- PASS: TestTemporalPrecisionAlignment/datetime/microseconds (0.00s)
+    --- PASS: TestTemporalPrecisionAlignment/datetime/microseconds_rejects_nanoseconds (0.00s)
+    --- PASS: TestTemporalPrecisionAlignment/datetime/nanoseconds (0.00s)
+    --- PASS: TestTemporalPrecisionAlignment/timestamp/unknown (0.00s)
+    --- PASS: TestTemporalPrecisionAlignment/timestamp/whole_seconds (0.00s)
+    --- PASS: TestTemporalPrecisionAlignment/timestamp/whole_seconds_rejects_fraction (0.00s)
+    --- PASS: TestTemporalPrecisionAlignment/timestamp/microseconds (0.00s)
+    --- PASS: TestTemporalPrecisionAlignment/timestamp/microseconds_rejects_nanoseconds (0.00s)
+    --- PASS: TestTemporalPrecisionAlignment/timestamp/nanoseconds (0.00s)
+=== RUN   TestTemporalPrecisionNestedValidation
+--- PASS: TestTemporalPrecisionNestedValidation (0.00s)
+=== RUN   TestTemporalPrecisionJSONAndCodec
+--- PASS: TestTemporalPrecisionJSONAndCodec (0.00s)
+=== RUN   TestTemporalPrecisionCloneAndAppend
+--- PASS: TestTemporalPrecisionCloneAndAppend (0.00s)
+=== RUN   TestTemporalPrecisionEstimatedBytes
+--- PASS: TestTemporalPrecisionEstimatedBytes (0.00s)
+=== RUN   TestTemporalPrecisionNestedCodecAndEquality
+--- PASS: TestTemporalPrecisionNestedCodecAndEquality (0.00s)
+=== RUN   TestExactValuesAndPresence
+--- PASS: TestExactValuesAndPresence (0.00s)
+=== RUN   TestNewValueRejectsUnsupportedAndInexactConcreteTypes
+=== RUN   TestNewValueRejectsUnsupportedAndInexactConcreteTypes/int64/int
+=== RUN   TestNewValueRejectsUnsupportedAndInexactConcreteTypes/int64/float64
+=== RUN   TestNewValueRejectsUnsupportedAndInexactConcreteTypes/uint64/int64
+=== RUN   TestNewValueRejectsUnsupportedAndInexactConcreteTypes/decimal/string
+=== RUN   TestNewValueRejectsUnsupportedAndInexactConcreteTypes/string/[]uint8
+=== RUN   TestNewValueRejectsUnsupportedAndInexactConcreteTypes/binary/string
+=== RUN   TestNewValueRejectsUnsupportedAndInexactConcreteTypes/float64/float64
+=== RUN   TestNewValueRejectsUnsupportedAndInexactConcreteTypes/float64/float64#01
+=== RUN   TestNewValueRejectsUnsupportedAndInexactConcreteTypes/bool/<nil>
+=== RUN   TestNewValueRejectsUnsupportedAndInexactConcreteTypes/string/string
+=== RUN   TestNewValueRejectsUnsupportedAndInexactConcreteTypes/uuid/string
+=== RUN   TestNewValueRejectsUnsupportedAndInexactConcreteTypes/date/record.DateValue
+=== RUN   TestNewValueRejectsUnsupportedAndInexactConcreteTypes/datetime/record.DateTimeValue
+=== RUN   TestNewValueRejectsUnsupportedAndInexactConcreteTypes/list/[]interface_{}
+=== RUN   TestNewValueRejectsUnsupportedAndInexactConcreteTypes/struct/map[string]interface_{}
+=== RUN   TestNewValueRejectsUnsupportedAndInexactConcreteTypes/unknown/string
+--- PASS: TestNewValueRejectsUnsupportedAndInexactConcreteTypes (0.00s)
+    --- PASS: TestNewValueRejectsUnsupportedAndInexactConcreteTypes/int64/int (0.00s)
+    --- PASS: TestNewValueRejectsUnsupportedAndInexactConcreteTypes/int64/float64 (0.00s)
+    --- PASS: TestNewValueRejectsUnsupportedAndInexactConcreteTypes/uint64/int64 (0.00s)
+    --- PASS: TestNewValueRejectsUnsupportedAndInexactConcreteTypes/decimal/string (0.00s)
+    --- PASS: TestNewValueRejectsUnsupportedAndInexactConcreteTypes/string/[]uint8 (0.00s)
+    --- PASS: TestNewValueRejectsUnsupportedAndInexactConcreteTypes/binary/string (0.00s)
+    --- PASS: TestNewValueRejectsUnsupportedAndInexactConcreteTypes/float64/float64 (0.00s)
+    --- PASS: TestNewValueRejectsUnsupportedAndInexactConcreteTypes/float64/float64#01 (0.00s)
+    --- PASS: TestNewValueRejectsUnsupportedAndInexactConcreteTypes/bool/<nil> (0.00s)
+    --- PASS: TestNewValueRejectsUnsupportedAndInexactConcreteTypes/string/string (0.00s)
+    --- PASS: TestNewValueRejectsUnsupportedAndInexactConcreteTypes/uuid/string (0.00s)
+    --- PASS: TestNewValueRejectsUnsupportedAndInexactConcreteTypes/date/record.DateValue (0.00s)
+    --- PASS: TestNewValueRejectsUnsupportedAndInexactConcreteTypes/datetime/record.DateTimeValue (0.00s)
+    --- PASS: TestNewValueRejectsUnsupportedAndInexactConcreteTypes/list/[]interface_{} (0.00s)
+    --- PASS: TestNewValueRejectsUnsupportedAndInexactConcreteTypes/struct/map[string]interface_{} (0.00s)
+    --- PASS: TestNewValueRejectsUnsupportedAndInexactConcreteTypes/unknown/string (0.00s)
+=== RUN   TestBatchValidationRejectsSchemaAndValueMismatch
+=== RUN   TestBatchValidationRejectsSchemaAndValueMismatch/missing_with_data
+=== RUN   TestBatchValidationRejectsSchemaAndValueMismatch/inexact_scale
+=== RUN   TestBatchValidationRejectsSchemaAndValueMismatch/list_element_mismatch
+=== RUN   TestBatchValidationRejectsSchemaAndValueMismatch/duplicate_field
+=== RUN   TestBatchValidationRejectsSchemaAndValueMismatch/wrong_concrete_integer
+=== RUN   TestBatchValidationRejectsSchemaAndValueMismatch/null_with_data
+=== RUN   TestBatchValidationRejectsSchemaAndValueMismatch/precision_overflow
+=== RUN   TestBatchValidationRejectsSchemaAndValueMismatch/struct_field_mismatch
+=== RUN   TestBatchValidationRejectsSchemaAndValueMismatch/unknown_kind
+=== RUN   TestBatchValidationRejectsSchemaAndValueMismatch/extra_key
+=== RUN   TestBatchValidationRejectsSchemaAndValueMismatch/null_forbidden
+--- PASS: TestBatchValidationRejectsSchemaAndValueMismatch (0.00s)
+    --- PASS: TestBatchValidationRejectsSchemaAndValueMismatch/missing_with_data (0.00s)
+    --- PASS: TestBatchValidationRejectsSchemaAndValueMismatch/inexact_scale (0.00s)
+    --- PASS: TestBatchValidationRejectsSchemaAndValueMismatch/list_element_mismatch (0.00s)
+    --- PASS: TestBatchValidationRejectsSchemaAndValueMismatch/duplicate_field (0.00s)
+    --- PASS: TestBatchValidationRejectsSchemaAndValueMismatch/wrong_concrete_integer (0.00s)
+    --- PASS: TestBatchValidationRejectsSchemaAndValueMismatch/null_with_data (0.00s)
+    --- PASS: TestBatchValidationRejectsSchemaAndValueMismatch/precision_overflow (0.00s)
+    --- PASS: TestBatchValidationRejectsSchemaAndValueMismatch/struct_field_mismatch (0.00s)
+    --- PASS: TestBatchValidationRejectsSchemaAndValueMismatch/unknown_kind (0.00s)
+    --- PASS: TestBatchValidationRejectsSchemaAndValueMismatch/extra_key (0.00s)
+    --- PASS: TestBatchValidationRejectsSchemaAndValueMismatch/null_forbidden (0.00s)
+=== RUN   TestDecimalNegativeScaleAndScaleGreaterThanPrecision
+--- PASS: TestDecimalNegativeScaleAndScaleGreaterThanPrecision (0.00s)
+=== RUN   TestCloneOwnsNestedDataAndSchema
+--- PASS: TestCloneOwnsNestedDataAndSchema (0.00s)
+=== RUN   TestAppendPreservesArgumentOrderAndEmptySchema
+--- PASS: TestAppendPreservesArgumentOrderAndEmptySchema (0.00s)
+=== RUN   TestTypedEncodingRoundTrip
+--- PASS: TestTypedEncodingRoundTrip (0.00s)
+=== RUN   TestTypedEncodingRejectsInvalidVersionBoundsAndDuplicateKeys
+--- PASS: TestTypedEncodingRejectsInvalidVersionBoundsAndDuplicateKeys (0.01s)
+PASS
+ok  	github.com/planx-lab/planx-sdk-go/record	7.424s
+=== RUN   TestBuildRegistration_DescriptorAndComponents
+--- PASS: TestBuildRegistration_DescriptorAndComponents (0.00s)
+=== RUN   TestBuildRegistration_MultiComponent_AllWired
+--- PASS: TestBuildRegistration_MultiComponent_AllWired (0.00s)
+=== RUN   TestSchema_BuilderAssemblesFields
+--- PASS: TestSchema_BuilderAssemblesFields (0.00s)
+=== RUN   TestToRows_CSVStringGrid
+--- PASS: TestToRows_CSVStringGrid (0.00s)
+=== RUN   TestToRows_NativeRows
+--- PASS: TestToRows_NativeRows (0.00s)
+=== RUN   TestToRows_SingleRow
+--- PASS: TestToRows_SingleRow (0.00s)
+=== RUN   TestToRows_Empty
+--- PASS: TestToRows_Empty (0.00s)
+=== RUN   TestToRows_HeaderOnly
+--- PASS: TestToRows_HeaderOnly (0.00s)
+=== RUN   TestToRows_Unsupported
+--- PASS: TestToRows_Unsupported (0.00s)
+=== RUN   TestFromRowsToStringGrid_Basic
+--- PASS: TestFromRowsToStringGrid_Basic (0.00s)
+=== RUN   TestFromRowsToStringGrid_MissingFieldBecomesEmpty
+--- PASS: TestFromRowsToStringGrid_MissingFieldBecomesEmpty (0.00s)
+=== RUN   TestFromRowsToStringGrid_EmptyRows
+--- PASS: TestFromRowsToStringGrid_EmptyRows (0.00s)
+=== RUN   TestFromRowsToStringGrid_NonStringValueStringified
+--- PASS: TestFromRowsToStringGrid_NonStringValueStringified (0.00s)
+=== RUN   TestBatchIsAny
+--- PASS: TestBatchIsAny (0.00s)
+=== RUN   TestSourceSPIInterface
+--- PASS: TestSourceSPIInterface (0.00s)
+=== RUN   TestSinkSPIInterface
+--- PASS: TestSinkSPIInterface (0.00s)
+=== RUN   TestProcessorSPIInterface
+--- PASS: TestProcessorSPIInterface (0.00s)
+PASS
+ok  	github.com/planx-lab/planx-sdk-go/sdk	6.614s
+EXIT planx-sdk-go 0
+
+MODULE planx-plugin-template-go
+COMMAND go test -mod=readonly -race -count=1 -timeout=180s -v ./...
+?   	github.com/planx-lab/planx-plugin-template-go/cmd/plugin	[no test files]
+=== RUN   TestProcessor_New_ReturnsProcessorSPI
+--- PASS: TestProcessor_New_ReturnsProcessorSPI (0.00s)
+=== RUN   TestProcessor_Init_NoConfig
+--- PASS: TestProcessor_Init_NoConfig (0.00s)
+=== RUN   TestProcessor_Process_ReturnsBatchUnchanged
+--- PASS: TestProcessor_Process_ReturnsBatchUnchanged (0.00s)
+=== RUN   TestProcessor_Process_NilBatch
+--- PASS: TestProcessor_Process_NilBatch (0.00s)
+=== RUN   TestProcessor_Close_NoError
+--- PASS: TestProcessor_Close_NoError (0.00s)
+=== RUN   TestTypedBatchPreservesValuesAndOwnsOutput
+--- PASS: TestTypedBatchPreservesValuesAndOwnsOutput (0.00s)
+=== RUN   TestTypedBatchRejectsInvalidInput
+--- PASS: TestTypedBatchRejectsInvalidInput (0.00s)
+PASS
+ok  	github.com/planx-lab/planx-plugin-template-go/internal/processor	1.904s
+=== RUN   TestSink_New_ReturnsSinkSPI
+--- PASS: TestSink_New_ReturnsSinkSPI (0.00s)
+=== RUN   TestSink_Init_NoConfig
+--- PASS: TestSink_Init_NoConfig (0.00s)
+=== RUN   TestSink_WriteBatch_PrintsBatch
+--- PASS: TestSink_WriteBatch_PrintsBatch (0.00s)
+=== RUN   TestSink_Close_NoError
+--- PASS: TestSink_Close_NoError (0.00s)
+PASS
+ok  	github.com/planx-lab/planx-plugin-template-go/internal/sink	3.593s
+=== RUN   TestSource_New_ReturnsSourceSPI
+--- PASS: TestSource_New_ReturnsSourceSPI (0.00s)
+=== RUN   TestSource_Init_NoConfig
+--- PASS: TestSource_Init_NoConfig (0.00s)
+=== RUN   TestSource_ReadBatch_AlwaysEOF
+--- PASS: TestSource_ReadBatch_AlwaysEOF (0.00s)
+=== RUN   TestSource_Close_NoError
+--- PASS: TestSource_Close_NoError (0.00s)
+PASS
+ok  	github.com/planx-lab/planx-plugin-template-go/internal/source	2.751s
+EXIT planx-plugin-template-go 0
+
+MODULE planx-plugin-processor-passthrough
+COMMAND go test -mod=readonly -race -count=1 -timeout=180s -v ./...
+?   	github.com/planx-lab/planx-plugin-processor-passthrough/cmd/plugin	[no test files]
+=== RUN   TestNewReturnsProcessorSPI
+--- PASS: TestNewReturnsProcessorSPI (0.00s)
+=== RUN   TestInitReturnsNil
+--- PASS: TestInitReturnsNil (0.00s)
+=== RUN   TestProcessReturnsBatchUnchanged
+--- PASS: TestProcessReturnsBatchUnchanged (0.00s)
+=== RUN   TestProcessPassthroughWithNilBatch
+--- PASS: TestProcessPassthroughWithNilBatch (0.00s)
+=== RUN   TestCloseReturnsNil
+--- PASS: TestCloseReturnsNil (0.00s)
+PASS
+ok  	github.com/planx-lab/planx-plugin-processor-passthrough/internal/plugin	1.902s
+EXIT planx-plugin-processor-passthrough 0
+
+MODULE planx-plugin-sink-stdout
+COMMAND go test -mod=readonly -race -count=1 -timeout=180s -v ./...
+?   	github.com/planx-lab/planx-plugin-sink-stdout/cmd/plugin	[no test files]
+=== RUN   TestSink_New_ReturnsSinkSPI
+--- PASS: TestSink_New_ReturnsSinkSPI (0.00s)
+=== RUN   TestSink_Init_NoConfig
+--- PASS: TestSink_Init_NoConfig (0.00s)
+=== RUN   TestSink_WriteBatch_PrettyPrintsRows
+--- PASS: TestSink_WriteBatch_PrettyPrintsRows (0.00s)
+=== RUN   TestSink_WriteBatch_EmptyRows_NoOutput
+--- PASS: TestSink_WriteBatch_EmptyRows_NoOutput (0.00s)
+=== RUN   TestSink_WriteBatch_DBBatchFallback
+--- PASS: TestSink_WriteBatch_DBBatchFallback (0.00s)
+=== RUN   TestSink_WriteBatch_GenericFallback
+--- PASS: TestSink_WriteBatch_GenericFallback (0.00s)
+=== RUN   TestSink_Close_NoError
+--- PASS: TestSink_Close_NoError (0.00s)
+PASS
+ok  	github.com/planx-lab/planx-plugin-sink-stdout/internal/plugin	1.898s
+EXIT planx-plugin-sink-stdout 0
+
+MODULE planx-engine/benchmarks/typed-records (pure Arrow tests only; no real-chain benchmarks)
+COMMAND go test -mod=readonly -race -tags=arrowbench -count=1 -timeout=180s -run '^TestArrow(Physical.*|TemporalPrecision)$' -v .
+# github.com/planx-lab/planx-engine/benchmarks/typed-records
+<HOME>/go/pkg/mod/gitcode.com/opengauss/open!gauss-connector-go-pq@v1.0.8/rfcdigest.go:11:2: missing go.sum entry for module providing package github.com/tjfoc/gmsm/sm3 (imported by gitcode.com/opengauss/openGauss-connector-go-pq); to add:
+	go get gitcode.com/opengauss/openGauss-connector-go-pq@v1.0.8
+FAIL	github.com/planx-lab/planx-engine/benchmarks/typed-records [setup failed]
+FAIL
+EXIT pure-arrow 1
+
+OVERALL_EXIT 1

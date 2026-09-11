@@ -1,0 +1,9 @@
+RED: existing real-process fixture must contain explicit p6 metadata and microseconds
+COMMAND go test -mod=readonly -tags=integration -count=1 -run '^TestExternalTypedFixtureIncludesKnownMicroseconds$' -v ./internal/runtime
+=== RUN   TestExternalTypedFixtureIncludesKnownMicroseconds
+    external_temporal_precision_test.go:13: external fixture must retain timestamp_microseconds Timestamp timePrecision=6: <nil>
+--- FAIL: TestExternalTypedFixtureIncludesKnownMicroseconds (0.00s)
+FAIL
+FAIL	github.com/planx-lab/planx-sdk-go/internal/runtime	1.290s
+FAIL
+EXIT red-fixture 1

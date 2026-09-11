@@ -35,5 +35,5 @@ func (s *PluginServer) Process(
 	if err != nil {
 		return nil, err
 	}
-	return &pb.Batch{Payload: packed}, nil
+	return &pb.Batch{Payload: packed, Lineage: append([]byte(nil), batchMsg.GetLineage()...)}, nil
 }

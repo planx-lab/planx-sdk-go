@@ -3,6 +3,9 @@ package batch
 import (
 	"bytes"
 	"encoding/gob"
+	"fmt"
+
+	"github.com/planx-lab/planx-sdk-go/record"
 )
 
 func init() {
@@ -55,12 +58,24 @@ func NewCodec() Codec {
 }
 
 func (c *gobCodec) Pack(b any) (PackedBatch, error) {
+	switch value := b.(type) {
+	case record.Batch:
+		return record.Encode(value)
+	case *record.Batch:
+		if value == nil {
+			return nil, fmt.Errorf("batch: nil typed batch")
+		}
+		return record.Encode(*value)
+	}
 	var buf bytes.Buffer
 	err := gob.NewEncoder(&buf).Encode(batchWrapper{Batch: b})
 	return buf.Bytes(), err
 }
 
 func (c *gobCodec) Unpack(p PackedBatch) (any, error) {
+	if bytes.HasPrefix(p, []byte(record.WirePrefix)) {
+		return record.Decode(p)
+	}
 	var w batchWrapper
 	err := gob.NewDecoder(bytes.NewReader(p)).Decode(&w)
 	return w.Batch, err

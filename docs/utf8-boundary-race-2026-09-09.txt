@@ -1,0 +1,23 @@
+UTF-8 boundary evidence 2026-09-09
+GOCACHE=/tmp/planx-builtin-gocache GOTOOLCHAIN=local GOWORK=off GOPROXY=off GOSUMDB=off
+COMMAND go test -mod=readonly -race -count=1 -timeout=60s -run '^(TestInvalidUTF8StringRejectedAtValueBatchAndEncode|TestDecodeRejectsInvalidUTF8RawTypedJSON|TestBinaryArbitraryBytesRoundTripWithUTF8Guards)$' -v ./record
+=== RUN   TestInvalidUTF8StringRejectedAtValueBatchAndEncode
+=== RUN   TestInvalidUTF8StringRejectedAtValueBatchAndEncode/Value.Validate
+    utf8_boundary_test.go:27: rejected invalid UTF-8: string is not valid UTF-8
+=== RUN   TestInvalidUTF8StringRejectedAtValueBatchAndEncode/Batch.Validate
+    utf8_boundary_test.go:27: rejected invalid UTF-8: record 0: field "text": string is not valid UTF-8
+=== RUN   TestInvalidUTF8StringRejectedAtValueBatchAndEncode/Encode
+    utf8_boundary_test.go:27: rejected invalid UTF-8: record 0: field "text": string is not valid UTF-8
+--- PASS: TestInvalidUTF8StringRejectedAtValueBatchAndEncode (0.00s)
+    --- PASS: TestInvalidUTF8StringRejectedAtValueBatchAndEncode/Value.Validate (0.00s)
+    --- PASS: TestInvalidUTF8StringRejectedAtValueBatchAndEncode/Batch.Validate (0.00s)
+    --- PASS: TestInvalidUTF8StringRejectedAtValueBatchAndEncode/Encode (0.00s)
+=== RUN   TestDecodeRejectsInvalidUTF8RawTypedJSON
+    utf8_boundary_test.go:56: rejected raw invalid UTF-8: wire data is not UTF-8
+--- PASS: TestDecodeRejectsInvalidUTF8RawTypedJSON (0.00s)
+=== RUN   TestBinaryArbitraryBytesRoundTripWithUTF8Guards
+    utf8_boundary_test.go:85: Binary retained exact bytes: [0 255 1]
+--- PASS: TestBinaryArbitraryBytesRoundTripWithUTF8Guards (0.00s)
+PASS
+ok  	github.com/planx-lab/planx-sdk-go/record	2.340s
+EXIT focused-utf8 0

@@ -1,0 +1,39 @@
+Temporal precision real-process fixture regression 2026-09-09
+Fixture: timestamp_microseconds Timestamp timePrecision=6; nanoseconds=123456000; UTC instant=2024-02-29T04:00:00.123456Z
+Existing unknown-precision nanosecond columns retained. No Arrow real-chain benchmark or database execution.
+GOCACHE=/tmp/planx-builtin-gocache GOTOOLCHAIN=local GOWORK=off GOPROXY=off GOSUMDB=off
+COMMAND go test -mod=readonly -race -tags=integration -count=1 -timeout=180s -run '^TestExternal(ProcessesTypedChain|TypedFixtureIncludesKnownMicroseconds)$' -v ./internal/runtime
+=== RUN   TestExternalProcessesTypedChain
+    external_process_test.go:60: COMMAND: cd <HOME>/workspace/repo/github.com/planx-lab/planx-sdk-go && go build -mod=readonly -o <TMP> ./internal/runtime/testdata/typed-source
+    external_process_test.go:64: EXIT build planx-sdk-go: 0
+    external_process_test.go:65: HANDSHAKE typed-source-fixture: {"protocol":"v4","address":"127.0.0.1:<PORT>"}
+    external_process_test.go:73: Discover typed-source-fixture: 1 components
+    external_process_test.go:60: COMMAND: cd <HOME>/workspace/repo/github.com/planx-lab/planx-plugin-template-go && go build -mod=readonly -o <TMP> ./cmd/plugin
+    external_process_test.go:64: EXIT build planx-plugin-template-go: 0
+    external_process_test.go:65: HANDSHAKE template: {"protocol":"v4","address":"127.0.0.1:<PORT>"}
+    external_process_test.go:73: Discover template: 3 components
+    external_process_test.go:60: COMMAND: cd <HOME>/workspace/repo/github.com/planx-lab/planx-plugin-processor-passthrough && go build -mod=readonly -o <TMP> ./cmd/plugin
+    external_process_test.go:64: EXIT build planx-plugin-processor-passthrough: 0
+    external_process_test.go:65: HANDSHAKE processor-passthrough: {"protocol":"v4","address":"127.0.0.1:<PORT>"}
+    external_process_test.go:73: Discover processor-passthrough: 1 components
+    external_process_test.go:60: COMMAND: cd <HOME>/workspace/repo/github.com/planx-lab/planx-plugin-sink-stdout && go build -mod=readonly -o <TMP> ./cmd/plugin
+    external_process_test.go:64: EXIT build planx-plugin-sink-stdout: 0
+    external_process_test.go:65: HANDSHAKE sink-stdout: {"protocol":"v4","address":"127.0.0.1:<PORT>"}
+    external_process_test.go:73: Discover sink-stdout: 1 components
+    external_process_test.go:89: actual template source: EOF skeleton verified
+    external_process_test.go:120: external p6: timePrecision=6 preserved with 1 records; nonempty rows retain 2024-02-29T04:00:00.123456Z
+    external_process_test.go:131: external p6: timePrecision=6 preserved with 1 records; nonempty rows retain 2024-02-29T04:00:00.123456Z
+    external_process_test.go:131: external p6: timePrecision=6 preserved with 1 records; nonempty rows retain 2024-02-29T04:00:00.123456Z
+    external_process_test.go:163: external sink: exact p6 timestamp_microseconds=2024-02-29T04:00:00.123456Z verified
+    external_process_test.go:163: external sink: exact p6 timestamp_microseconds=2024-02-29T04:00:00.123456Z verified
+    external_process_test.go:171: typed batch 0: 1 records, two processors, two sinks, exact values and lineage preserved
+    external_process_test.go:120: external p6: timePrecision=6 preserved with 0 records; nonempty rows retain 2024-02-29T04:00:00.123456Z
+    external_process_test.go:131: external p6: timePrecision=6 preserved with 0 records; nonempty rows retain 2024-02-29T04:00:00.123456Z
+    external_process_test.go:131: external p6: timePrecision=6 preserved with 0 records; nonempty rows retain 2024-02-29T04:00:00.123456Z
+    external_process_test.go:171: typed batch 1: 0 records, two processors, two sinks, exact values and lineage preserved
+--- PASS: TestExternalProcessesTypedChain (7.59s)
+=== RUN   TestExternalTypedFixtureIncludesKnownMicroseconds
+--- PASS: TestExternalTypedFixtureIncludesKnownMicroseconds (0.00s)
+PASS
+ok  	github.com/planx-lab/planx-sdk-go/internal/runtime	10.044s
+EXIT real-process-p6 0

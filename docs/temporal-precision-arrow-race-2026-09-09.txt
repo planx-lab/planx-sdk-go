@@ -1,0 +1,33 @@
+Temporal precision pure Arrow recovery 2026-09-09
+Scope: nested benchmark module only; cached dependency checksums; no database access or benchmark execution
+COMMAND go list -mod=mod -deps -test -tags=arrowbench . > /dev/null
+EXIT cached-graph 0
+COMMAND go list -mod=readonly -m github.com/apache/arrow-go/v18 gitcode.com/opengauss/openGauss-connector-go-pq github.com/tjfoc/gmsm
+github.com/apache/arrow-go/v18 v18.7.0
+gitcode.com/opengauss/openGauss-connector-go-pq v1.0.8
+github.com/tjfoc/gmsm v1.4.1
+EXIT versions 0
+COMMAND go test -mod=readonly -race -tags=arrowbench -count=1 -timeout=180s -run '^TestArrow(Physical.*|TemporalPrecision)$' -v .
+=== RUN   TestArrowPhysicalExactness
+--- PASS: TestArrowPhysicalExactness (0.00s)
+=== RUN   TestArrowPhysicalRejectsUnsupportedSlice
+--- PASS: TestArrowPhysicalRejectsUnsupportedSlice (0.00s)
+=== RUN   TestArrowTemporalPrecision
+=== RUN   TestArrowTemporalPrecision/unknown
+=== RUN   TestArrowTemporalPrecision/seconds
+=== RUN   TestArrowTemporalPrecision/microseconds
+=== RUN   TestArrowTemporalPrecision/nanoseconds
+=== RUN   TestArrowTemporalPrecision/seconds_reject_fraction
+=== RUN   TestArrowTemporalPrecision/microseconds_reject_nanoseconds
+=== RUN   TestArrowTemporalPrecision/invalid_bound
+--- PASS: TestArrowTemporalPrecision (0.00s)
+    --- PASS: TestArrowTemporalPrecision/unknown (0.00s)
+    --- PASS: TestArrowTemporalPrecision/seconds (0.00s)
+    --- PASS: TestArrowTemporalPrecision/microseconds (0.00s)
+    --- PASS: TestArrowTemporalPrecision/nanoseconds (0.00s)
+    --- PASS: TestArrowTemporalPrecision/seconds_reject_fraction (0.00s)
+    --- PASS: TestArrowTemporalPrecision/microseconds_reject_nanoseconds (0.00s)
+    --- PASS: TestArrowTemporalPrecision/invalid_bound (0.00s)
+PASS
+ok  	github.com/planx-lab/planx-engine/benchmarks/typed-records	2.551s
+EXIT pure-arrow 0

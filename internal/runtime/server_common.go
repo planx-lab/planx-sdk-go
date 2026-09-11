@@ -7,6 +7,7 @@ import (
 	"os"
 
 	pb "github.com/planx-lab/planx-proto/gen/go/planx/plugin/v4"
+	"github.com/planx-lab/planx-sdk-go/internal/observability"
 	"github.com/planx-lab/planx-sdk-go/internal/util"
 	"google.golang.org/grpc"
 )
@@ -26,9 +27,19 @@ func ServeGRPC(register func(*grpc.Server)) {
 		panic(err)
 	}
 
+	// Interceptor order matters: metrics runs OUTSIDE recovery so it can
+	// observe (and time) the full RPC including any panic recovered downstream.
+	// ChainUnaryInterceptor executes handlers left-to-right, so the first entry
+	// is the outermost: metrics -> recovery -> handler.
 	grpcServer := grpc.NewServer(
-		grpc.ChainUnaryInterceptor(recoveryUnaryInterceptor),
-		grpc.ChainStreamInterceptor(recoveryStreamInterceptor),
+		grpc.ChainUnaryInterceptor(
+			observability.MetricsUnaryInterceptor,
+			recoveryUnaryInterceptor,
+		),
+		grpc.ChainStreamInterceptor(
+			observability.MetricsStreamInterceptor,
+			recoveryStreamInterceptor,
+		),
 	)
 	register(grpcServer)
 

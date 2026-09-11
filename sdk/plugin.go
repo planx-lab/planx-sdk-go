@@ -4,6 +4,7 @@ import (
 	"context"
 
 	pb "github.com/planx-lab/planx-proto/gen/go/planx/plugin/v4"
+	"github.com/planx-lab/planx-sdk-go/internal/observability"
 	"github.com/planx-lab/planx-sdk-go/internal/runtime"
 	"google.golang.org/grpc"
 )
@@ -80,7 +81,23 @@ type Plugin struct {
 
 // Serve builds and runs the plugin's gRPC server (all five services). It
 // blocks forever; a construction error (no components, duplicate id) panics.
+//
+// If the PLANX_SDK_METRICS_ADDR environment variable is set to a non-empty
+// listen address (e.g. "127.0.0.1:9100"), Serve also starts an HTTP server
+// exposing Prometheus metrics at /metrics. The metrics server is opt-in and
+// disabled by default, so existing plugins behave exactly as before unless
+// the env var is set.
 func Serve(p Plugin) {
+	// Opt-in metrics endpoint. No-op (returns nil) when env var is unset. A
+	// failure to start the metrics server must NOT take down the data plane:
+	// log and continue without metrics. Stop() is nil-safe.
+	metricsSrv, err := observability.StartMetricsServer()
+	if err != nil {
+		observability.Logger().Error("planx-sdk metrics server failed to start; continuing without metrics", "err", err)
+		metricsSrv = nil
+	}
+	defer metricsSrv.Stop()
+
 	desc, comps := buildRegistration(p)
 	srv, err := runtime.NewPluginServer(desc, comps)
 	if err != nil {

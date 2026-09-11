@@ -1,51 +1,25 @@
-# AI RULES — PLANX SDK (v4)
+# Planx Go SDK
 
-## Authority Documents
+## Collaboration and references
 
-Before modification:
-1. [planx-architecture.md](../planx-architecture.md)
-2. [planx-ai-guardrails.md](../planx-ai-guardrails.md)
-3. [AI_CONTRACT.md](../AI_CONTRACT.md)
+Use [workspace guidance](../AGENTS.md) for task completion, authorization and
+proportionate checks. Read relevant clauses of the [canonical contract](../planx-spec/AI_CONTRACT.md),
+[architecture](../planx-spec/planx-architecture.md) and accepted
+[ADR-017](../planx-spec/adr/017-builtin-typed-data-integration.md) when their
+subject changes. Use [repo.lock](repo.lock) for source ownership. Do not reread
+the entire specification for an unrelated edit.
 
----
+## Ownership
 
-## SCOPE
-
-This SDK owns ALL runtime semantics (sessions, gRPC, flow control).
-
----
-
-## SDK HARD RULES
-
-You MUST NOT:
-
-1. Move runtime logic into Engine
-2. Move runtime logic into Plugins
-3. Expose gRPC, sessions, or flow control to plugin developers
-4. Allow plugins to control concurrency or backpressure
-5. Parse payload data (opaque bytes only)
-6. Introduce single-record APIs
-7. Leak session, window, or flow control to SPI
-8. Import planx-engine
-
-YOU MUST:
-
-1. Keep SPI minimal and synchronous
-2. Hide runtime complexity inside internal/
-3. Treat plugins as user code, not system code
-
----
-
-## SDK IS THE ONLY PLACE FOR
-
-- gRPC servers
-- Session lifecycle
-- Flow control (window blocking)
-- Batch packing/unpacking
-- Panic recovery
-- Observability hooks
-
----
-
-If any change violates these rules:
-STOP and ASK.
+- Own the external plugin runtime: gRPC servers, sessions, flow control,
+  batching, panic recovery and observability hooks. These internals stay in
+  `internal/`; plugins do not manage sessions, concurrency or backpressure.
+- `sdk/` and `record/` are public contracts under ADR-017. The public typed-data
+  layer owns schema/value validation, cloning and boundary encoding/decoding.
+  The old opaque-only restriction does not prohibit this approved layer.
+- Engine may consume the public typed-data/SPI contract, never SDK internals.
+  SDK does not import Engine or contain its database drivers, CEL or Lookup logic.
+- Keep SPI minimal, batch-oriented and synchronous. Do not expose gRPC/session/
+  window types or add a single-record execution API. Plugins remain user code.
+- Verify public changes in affected SDK, Engine and external plugin consumers;
+  preserve external-process, precision and transport regression tests.

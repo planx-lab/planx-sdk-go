@@ -194,5 +194,18 @@ func discoveryToProto(d *SchemaDiscovery) *pb.DiscoverSchemaResponse {
 			Name: c.Name, Type: c.Type, Nullable: c.Nullable,
 		})
 	}
+	if d.TargetMetadata != nil {
+		meta := &pb.TargetTableMetadata{UsableUpsertKeysComplete: d.TargetMetadata.UsableUpsertKeysComplete}
+		for _, policy := range d.TargetMetadata.Columns {
+			meta.Columns = append(meta.Columns, &pb.TargetColumnPolicy{
+				Name: policy.Name, HasDefault: policy.HasDefault, Generated: policy.Generated,
+				Identity: policy.Identity, IdentityAlways: policy.IdentityAlways,
+			})
+		}
+		for _, key := range d.TargetMetadata.UsableUpsertKeys {
+			meta.UsableUpsertKeys = append(meta.UsableUpsertKeys, &pb.ColumnSet{Columns: append([]string(nil), key...)})
+		}
+		resp.TargetMetadata = meta
+	}
 	return resp
 }

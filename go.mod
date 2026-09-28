@@ -1,6 +1,6 @@
 module github.com/planx-lab/planx-sdk-go
 
-go 1.25.3
+go 1.27.1
 
 replace github.com/planx-lab/planx-proto => ../planx-proto
 

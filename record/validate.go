@@ -125,7 +125,7 @@ func checkField(f *Field, depth int, limits *budget) error {
 		}
 	case List:
 		if f.Element == nil {
-			return fmt.Errorf("List requires an element field")
+			return fmt.Errorf("list requires an element field")
 		}
 		return checkField(f.Element, depth+1, limits)
 	case Struct:

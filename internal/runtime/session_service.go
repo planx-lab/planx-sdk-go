@@ -68,15 +68,18 @@ func (s *PluginServer) CloseSession(
 	req *pb.SessionCloseRequest,
 ) (*pb.SessionCloseResponse, error) {
 
-	sess, ok := s.sessions.DeleteAndGet(req.GetSessionId())
-	if ok {
+	sess, ok := s.sessions.Get(req.GetSessionId())
+	if !ok {
+		return &pb.SessionCloseResponse{}, nil
+	}
+	if err := sess.close(); err != nil {
+		observability.Logger().Error("planx-sdk spi.Close error", "session_id", req.GetSessionId(), "err", err)
+		return nil, status.Error(codes.Internal, "plugin cleanup failed")
+	}
+	// Concurrent callers observe the same close result. Remove/count success
+	// exactly once; failed sessions retain their outcome and resource charge.
+	if _, removed := s.sessions.DeleteAndGet(req.GetSessionId()); removed {
 		observability.DecActiveSession()
-		if err := sess.close(); err != nil {
-			observability.Logger().Error("planx-sdk spi.Close error",
-				"session_id", req.GetSessionId(),
-				"err", err,
-			)
-		}
 	}
 	return &pb.SessionCloseResponse{}, nil
 }
@@ -90,7 +93,7 @@ func (s *PluginServer) Ack(
 ) (*pb.AckResponse, error) {
 
 	sess, ok := s.sessions.Get(req.GetSessionId())
-	if !ok {
+	if !ok || sess.closing.Load() {
 		return nil, status.Error(codes.NotFound, "session not found")
 	}
 	if sess.window != nil {

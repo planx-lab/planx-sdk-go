@@ -119,7 +119,7 @@ func (s *PluginServer) sessionFromMetadata(ctx context.Context) (*liveSession, e
 		return nil, status.Error(codes.InvalidArgument, "missing session id in metadata")
 	}
 	sess, ok := s.sessions.Get(ids[0])
-	if !ok {
+	if !ok || sess.closing.Load() {
 		return nil, status.Error(codes.NotFound, "session not found")
 	}
 	return sess, nil

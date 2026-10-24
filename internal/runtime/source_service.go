@@ -17,7 +17,7 @@ func (s *PluginServer) OpenStream(
 ) error {
 
 	sess, ok := s.sessions.Get(req.GetSessionId())
-	if !ok {
+	if !ok || sess.closing.Load() {
 		return status.Error(codes.NotFound, "session not found")
 	}
 	if sess.source == nil {

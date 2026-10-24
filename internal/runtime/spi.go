@@ -2,6 +2,9 @@ package runtime
 
 import (
 	"context"
+	"errors"
+	"sync"
+	"sync/atomic"
 
 	"github.com/planx-lab/planx-sdk-go/internal/flow"
 )
@@ -35,22 +38,33 @@ type SinkSPI interface {
 // source/processor/sink is non-nil, matching the bound component's kind.
 // window is non-nil only for SOURCE sessions (stream flow control).
 type liveSession struct {
+	closing   atomic.Bool
+	closeOnce sync.Once
+	closeErr  error
 	source    SourceSPI
 	processor ProcessorSPI
 	sink      SinkSPI
 	window    *flow.Window
 }
 
-// close calls Close on whichever SPI owns this session. Idempotent-safe:
-// only one SPI field is ever set.
+// close runs SPI.Close once. A failed or panicking close remains failed on
+// repeated requests; closing sessions cannot accept new business operations.
 func (s *liveSession) close() error {
-	switch {
-	case s.source != nil:
-		return s.source.Close()
-	case s.processor != nil:
-		return s.processor.Close()
-	case s.sink != nil:
-		return s.sink.Close()
-	}
-	return nil
+	s.closing.Store(true)
+	s.closeOnce.Do(func() {
+		// The existing RPC interceptor reports panics. Keep a failure here too so
+		// a later CloseSession cannot manufacture success after a panic.
+		s.closeErr = errors.New("plugin cleanup did not complete")
+		switch {
+		case s.source != nil:
+			s.closeErr = s.source.Close()
+		case s.processor != nil:
+			s.closeErr = s.processor.Close()
+		case s.sink != nil:
+			s.closeErr = s.sink.Close()
+		default:
+			s.closeErr = nil
+		}
+	})
+	return s.closeErr
 }
